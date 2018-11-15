@@ -1,15 +1,15 @@
-package de.hpi.octopus.actors.listeners;
+package skynet.actors.listeners;
 
 import akka.actor.AbstractActor;
 import akka.actor.Props;
 import akka.cluster.Cluster;
 import akka.cluster.ClusterEvent.CurrentClusterState;
 import akka.cluster.metrics.ClusterMetricsChanged;
+import akka.cluster.metrics.ClusterMetricsExtension;
 import akka.cluster.metrics.NodeMetrics;
 import akka.cluster.metrics.StandardMetrics;
-import akka.cluster.metrics.StandardMetrics.HeapMemory;
 import akka.cluster.metrics.StandardMetrics.Cpu;
-import akka.cluster.metrics.ClusterMetricsExtension;
+import akka.cluster.metrics.StandardMetrics.HeapMemory;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 

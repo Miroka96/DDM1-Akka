@@ -1,13 +1,12 @@
-package de.hpi.octopus;
-
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+package skynet;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
-import de.hpi.octopus.OctopusMaster;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 public class OctopusApp {
 

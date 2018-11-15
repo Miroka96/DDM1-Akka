@@ -1,11 +1,4 @@
-package de.hpi.octopus.actors;
-
-import java.io.Serializable;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Queue;
+package skynet.actors;
 
 import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
@@ -13,9 +6,11 @@ import akka.actor.Props;
 import akka.actor.Terminated;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import de.hpi.octopus.actors.Worker.WorkMessage;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+
+import java.io.Serializable;
+import java.util.*;
 
 public class Profiler extends AbstractActor {
 
@@ -59,9 +54,9 @@ public class Profiler extends AbstractActor {
 	
 	private final LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
-	private final Queue<WorkMessage> unassignedWork = new LinkedList<>();
+    private final Queue<Worker.WorkMessage> unassignedWork = new LinkedList<>();
 	private final Queue<ActorRef> idleWorkers = new LinkedList<>();
-	private final Map<ActorRef, WorkMessage> busyWorkers = new HashMap<>();
+    private final Map<ActorRef, Worker.WorkMessage> busyWorkers = new HashMap<>();
 
 	private TaskMessage task;
 
@@ -91,7 +86,7 @@ public class Profiler extends AbstractActor {
 		this.context().unwatch(message.getActor());
 		
 		if (!this.idleWorkers.remove(message.getActor())) {
-			WorkMessage work = this.busyWorkers.remove(message.getActor());
+            Worker.WorkMessage work = this.busyWorkers.remove(message.getActor());
 			if (work != null) {
 				this.assign(work);
 			}
@@ -104,12 +99,12 @@ public class Profiler extends AbstractActor {
 			this.log.error("The profiler actor can process only one task in its current implementation!");
 		
 		this.task = message;
-		this.assign(new WorkMessage(new int[0], new int[0]));
+        this.assign(new Worker.WorkMessage(new int[0], new int[0]));
 	}
 	
 	private void handle(CompletionMessage message) {
 		ActorRef worker = this.sender();
-		WorkMessage work = this.busyWorkers.remove(worker);
+        Worker.WorkMessage work = this.busyWorkers.remove(worker);
 
 		this.log.info("Completed: [{},{}]", Arrays.toString(work.getX()), Arrays.toString(work.getY()));
 		
@@ -130,8 +125,8 @@ public class Profiler extends AbstractActor {
 		
 		this.assign(worker);
 	}
-	
-	private void assign(WorkMessage work) {
+
+    private void assign(Worker.WorkMessage work) {
 		ActorRef worker = this.idleWorkers.poll();
 		
 		if (worker == null) {
@@ -144,7 +139,7 @@ public class Profiler extends AbstractActor {
 	}
 	
 	private void assign(ActorRef worker) {
-		WorkMessage work = this.unassignedWork.poll();
+        Worker.WorkMessage work = this.unassignedWork.poll();
 		
 		if (work == null) {
 			this.idleWorkers.add(worker);
@@ -154,12 +149,12 @@ public class Profiler extends AbstractActor {
 		this.busyWorkers.put(worker, work);
 		worker.tell(work, this.self());
 	}
-	
-	private void report(WorkMessage work) {
+
+    private void report(Worker.WorkMessage work) {
 		this.log.info("UCC: {}", Arrays.toString(work.getX()));
 	}
 
-	private void split(WorkMessage work) {
+    private void split(Worker.WorkMessage work) {
 		int[] x = work.getX();
 		int[] y = work.getY();
 		
@@ -168,11 +163,11 @@ public class Profiler extends AbstractActor {
 		if (next < this.task.getAttributes() - 1) {
 			int[] xNew = Arrays.copyOf(x, x.length + 1);
 			xNew[x.length] = next;
-			this.assign(new WorkMessage(xNew, y));
+            this.assign(new Worker.WorkMessage(xNew, y));
 			
 			int[] yNew = Arrays.copyOf(y, y.length + 1);
 			yNew[y.length] = next;
-			this.assign(new WorkMessage(x, yNew));
+            this.assign(new Worker.WorkMessage(x, yNew));
 		}
 	}
 }

@@ -1,6 +1,4 @@
-package de.hpi.octopus.actors;
-
-import java.io.Serializable;
+package skynet.actors;
 
 import akka.actor.AbstractActor;
 import akka.actor.Props;
@@ -11,11 +9,13 @@ import akka.cluster.Member;
 import akka.cluster.MemberStatus;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import de.hpi.octopus.OctopusMaster;
-import de.hpi.octopus.actors.Profiler.CompletionMessage;
-import de.hpi.octopus.actors.Profiler.RegistrationMessage;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import skynet.OctopusMaster;
+import skynet.actors.Profiler.CompletionMessage;
+import skynet.actors.Profiler.RegistrationMessage;
+
+import java.io.Serializable;
 
 public class Worker extends AbstractActor {
 

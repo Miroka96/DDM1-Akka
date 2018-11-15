@@ -1,14 +1,13 @@
-package de.hpi.octopus;
-
-import java.util.concurrent.TimeUnit;
-
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
+package skynet;
 
 import akka.actor.ActorSystem;
 import akka.cluster.Cluster;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import scala.concurrent.Await;
 import scala.concurrent.duration.Duration;
+
+import java.util.concurrent.TimeUnit;
 
 public class OctopusSystem {
 
