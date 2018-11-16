@@ -1,4 +1,4 @@
-package sample.cluster.simple
+package skynet.cluster
 
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent._

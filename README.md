@@ -7,7 +7,7 @@ This tutorial contains 4 samples illustrating different [Akka cluster](http://do
 
 ## A Simple Cluster Example
 
-Open [application.conf](src/main/resources/application.conf)
+Open [application.conf](skynet/src/main/resources/application.conf)
 
 To enable cluster capabilities in your Akka project you should, at a minimum, add the remote settings, and use `akka.cluster.ClusterActorRefProvider`. The `akka.cluster.seed-nodes` should normally also be added to your application.conf file.
 
@@ -15,9 +15,9 @@ The seed nodes are configured contact points which newly started nodes will try 
 
 Note that if you are going to start the nodes on different machines you need to specify the ip-addresses or host names of the machines in `application.conf` instead of `127.0.0.1`.
 
-Open [SimpleClusterApp.scala](src/main/scala/skynet/cluster/simple/SimpleClusterApp.scala).
+Open [SimpleClusterApp.scala](skynet/src/main/scala/skynet/cluster/simple/SimpleClusterApp.scala).
 
-The small program together with its configuration starts an ActorSystem with the Cluster enabled. It joins the cluster and starts an actor that logs some membership events. Take a look at the [SimpleClusterListener.scala](src/main/scala/skynet/cluster/SimpleClusterListener.scala) actor.
+The small program together with its configuration starts an ActorSystem with the Cluster enabled. It joins the cluster and starts an actor that logs some membership events. Take a look at the [SimpleClusterListener.scala](skynet/src/main/scala/skynet/cluster/SimpleClusterListener.scala) actor.
 
 You can read more about the cluster concepts in the [documentation](http://doc.akka.io/docs/akka/2.5/scala/cluster-usage.html).
 
@@ -59,13 +59,13 @@ Let's take a look at an example that illustrates how workers, here named *backen
 
 The example application provides a service to transform text. When some text is sent to one of the frontend services, it will be delegated to one of the backend workers, which performs the transformation job, and sends the result back to the original client. New backend nodes, as well as new frontend nodes, can be added or removed to the cluster dynamically.
 
-Open [TransformationMessages.scala](src/main/scala/skynet/templates/transformation/TransformationMessages.scala). It defines the messages that are sent between the actors.
+Open [TransformationMessages.scala](skynet/src/main/scala/skynet/templates/transformation/TransformationMessages.scala). It defines the messages that are sent between the actors.
 
-The backend worker that performs the transformation job is defined in [TransformationBackend.scala](src/main/scala/skynet/templates/transformation/TransformationBackend.scala).
+The backend worker that performs the transformation job is defined in [TransformationBackend.scala](skynet/src/main/scala/skynet/templates/transformation/TransformationBackend.scala).
 
 Note that the `TransformationBackend` actor subscribes to cluster events to detect new, potential, frontend nodes, and send them a registration message so that they know that they can use the backend worker.
 
-The frontend that receives user jobs and delegates to one of the registered backend workers is defined in [TransformationFrontend.scala](src/main/scala/skynet/templates/transformation/TransformationFrontend.scala).
+The frontend that receives user jobs and delegates to one of the registered backend workers is defined in [TransformationFrontend.scala](skynet/src/main/scala/skynet/templates/transformation/TransformationFrontend.scala).
 
 Note that the `TransformationFrontend` actor watch the registered backend to be able to remove it from its list of available backend workers. Death watch uses the cluster failure detector for nodes in the cluster, i.e. it detects network failures and JVM crashes, in addition to graceful termination of watched actor.
 
@@ -97,17 +97,17 @@ Let's take a look at how to use a cluster aware router with a group of routees, 
 
 The example application provides a service to calculate statistics for a text. When some text is sent to the service it splits it into words, and delegates the task to count number of characters in each word to a separate worker, a routee of a router. The character count for each word is sent back to an aggregator that calculates the average number of characters per word when all results have been collected.
 
-Open [StatsMessages.scala](src/main/scala/skynet/templates/stats/StatsMessages.scala). It defines the messages that are sent between the actors.
+Open [StatsMessages.scala](skynet/src/main/scala/skynet/templates/stats/StatsMessages.scala). It defines the messages that are sent between the actors.
 
-The worker that counts number of characters in each word is defined in [StatsWorker.scala](src/main/scala/skynet/templates/stats/StatsWorker.scala).
+The worker that counts number of characters in each word is defined in [StatsWorker.scala](skynet/src/main/scala/skynet/templates/stats/StatsWorker.scala).
 
-The service that receives text from users and splits it up into words, delegates to workers and aggregates is defined in [StatsService.scala](src/main/scala/skynet/templates/stats/StatsService.scala).
+The service that receives text from users and splits it up into words, delegates to workers and aggregates is defined in [StatsService.scala](skynet/src/main/scala/skynet/templates/stats/StatsService.scala).
 
 Note, nothing cluster specific so far, just plain actors.
 
 All nodes start `StatsService` and `StatsWorker` actors. Remember, routees are the workers in this case.
 
-Open [stats1.conf](src/main/resources/stats1.conf). The router is configured with `routees.paths`. This means that user requests can be sent to `StatsService` on any node and it will use `StatsWorker` on all nodes.
+Open [stats1.conf](skynet/src/main/resources/stats1.conf). The router is configured with `routees.paths`. This means that user requests can be sent to `StatsService` on any node and it will use `StatsWorker` on all nodes.
 
 To run this sample, type `sbt "runMain sample.cluster.stats.StatsSample"` if it is not already started.
 
@@ -131,7 +131,7 @@ We also need an actor on each node that keeps track of where current single mast
 
 The `ClusterSingletonProxy` receives text from users and delegates to the current `StatsService`, the single master. It listens to cluster events to lookup the `StatsService` on the oldest node.
 
-All nodes start `ClusterSingletonProxy` and the `ClusterSingletonManager`. The router is now configured in [stats2.conf](src/main/resources/stats2.conf).
+All nodes start `ClusterSingletonProxy` and the `ClusterSingletonManager`. The router is now configured in [stats2.conf](skynet/src/main/resources/stats2.conf).
 
 To run this sample, type `sbt "runMain sample.cluster.stats.StatsSampleOneMaster"` if it is not already started.
 
@@ -153,11 +153,11 @@ You can read more about cluster metrics in the [documentation](http://doc.akka.i
 
 Let's take a look at this router in action. What can be more demanding than calculating factorials?
 
-The backend worker that performs the factorial calculation is defined in [FactorialBackend.scala](src/main/scala/skynet/templates/factorial/FactorialBackend.scala).
+The backend worker that performs the factorial calculation is defined in [FactorialBackend.scala](skynet/src/main/scala/skynet/templates/factorial/FactorialBackend.scala).
 
-The frontend that receives user jobs and delegates to the backends via the router is defined in [FactorialFrontend.scala](src/main/scala/skynet/templates/factorial/FactorialBackend.scala).
+The frontend that receives user jobs and delegates to the backends via the router is defined in [FactorialFrontend.scala](skynet/src/main/scala/skynet/templates/factorial/FactorialBackend.scala).
 
-As you can see, the router is defined in the same way as other routers, and in this case it is configured in [factorial.conf](src/main/resources/factorial.conf).
+As you can see, the router is defined in the same way as other routers, and in this case it is configured in [factorial.conf](skynet/src/main/resources/factorial.conf).
 
 It is only router type `adaptive` and the `metrics-selector` that is specific to this router, other things work in the same way as other routers.
 
@@ -177,5 +177,5 @@ Press ctrl-c in the terminal window of the frontend to stop the factorial calcul
 
 ## Tests
 
-Tests can be found in [src/multi-jvm](src/multi-jvm). You can run them by typing `sbt multi-jvm:test`.
+Tests can be found in [src/multi-jvm](skynet/src/multi-jvm). You can run them by typing `sbt multi-jvm:test`.
 

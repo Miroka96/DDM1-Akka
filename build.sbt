@@ -28,12 +28,27 @@ fork in run := true
 parallelExecution in Test := false
 
 val additionalPom =
+  <properties>
+    <encoding>UTF-8</encoding>
+  </properties>
   <build>
+    <sourceDirectory>src/main/scala</sourceDirectory>
+    <testSourceDirectory>src/test/scala</testSourceDirectory>
+    <resources>
+      <resource>
+        <directory>src/main/resources/</directory>
+      </resource>
+    </resources>
+    <testResources>
+      <testResource>
+        <directory>src/test/resources/</directory>
+      </testResource>
+    </testResources>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.1</version>
+        <version>3.3</version>
         <configuration>
           <source>1.8</source>
           <target>1.8</target>
@@ -41,6 +56,25 @@ val additionalPom =
           <showWarnings>true</showWarnings>
           <showDeprecation>true</showDeprecation>
           <compilerArgument>-Xlint:all</compilerArgument>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>net.alchim31.maven</groupId>
+        <artifactId>scala-maven-plugin</artifactId>
+        <version>3.2.2</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>compile</goal>
+              <goal>testCompile</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <args>
+            <!-- work-around for https://issues.scala-lang.org/browse/SI-8358 -->
+            <arg>-nobootcp</arg>
+          </args>
         </configuration>
       </plugin>
       <plugin>
