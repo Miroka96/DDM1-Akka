@@ -112,7 +112,7 @@
 							<transformers>
 								<transformer
 									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>skynet.OctopusApp</mainClass>
+                                    <mainClass>sample.cluster.simple.SimpleClusterApp</mainClass>
 								</transformer>
 								<transformer
 									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
