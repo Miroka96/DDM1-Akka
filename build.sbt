@@ -15,11 +15,12 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-testkit" % akkaVersion,
   "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
   "org.scalatest" %% "scalatest" % "3.0.5" % Test,
-  "io.kamon" % "sigar-loader" % "1.6.6-rev002",
+  //  "io.kamon" % "sigar-loader" % "1.6.6-rev002",
   "ch.qos.logback" % "logback-core" % "1.2.3",
   "com.beust" % "jcommander" % "1.72",
   "com.twitter" %% "chill-akka" % "0.9.3",
-  "org.projectlombok" % "lombok" % "1.18.2")
+  "org.projectlombok" % "lombok" % "1.18.2",
+  "org.slf4j" % "slf4j-simple" % "1.7.25")
 
 scalacOptions in Compile ++= Seq("-deprecation", "-feature", "-unchecked", "-Xlog-reflective-calls", "-Xlint")
 javacOptions in Compile ++= Seq("-Xlint:unchecked", "-Xlint:deprecation")
