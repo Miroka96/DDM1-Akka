@@ -3,7 +3,7 @@ organization := "one.codebase"
 scalaVersion := "2.12.7"
 val akkaVersion = "2.5.18"
 
-val mainclass = "skynet.cluster.SimpleClusterApp"
+val mainclass = "skynet.cluster.SkynetApp"
 
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % akkaVersion,

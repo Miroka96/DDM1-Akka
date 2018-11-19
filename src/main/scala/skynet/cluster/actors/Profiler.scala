@@ -108,7 +108,7 @@ class Profiler extends AbstractActor {
     val work = this.busyWorkers.remove(worker)
     log.info("Completed: [{},{}]", util.Arrays.toString(work.x), util.Arrays.toString(work.y))
     import skynet.cluster.actors.Profiler.CompletionMessage.CompletionStatus._
-    message match {
+    message.result match {
       case MINIMAL =>
         report(work)
       case EXTENDABLE =>
