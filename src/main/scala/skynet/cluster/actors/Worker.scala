@@ -68,17 +68,11 @@ class Worker extends AbstractActor {
 
   private def handleWork(message: Worker.WorkMessage): Unit = {
     var y = 0
-    var i = 0
-    while ( {
-      i < 1000000
-    }) {
-      if (this.isPrime(i)) y = y + i {
-        i += 1;
-        i - 1
-      }
+    for (i <- 0 until 1000000) {
+      if (isPrime(i)) y = y + i
     }
     this.log.info("done: " + y)
-    this.sender.tell(new Profiler.CompletionMessage(Profiler.CompletionMessage.status.EXTENDABLE), this.self)
+    this.sender.tell(new Profiler.CompletionMessage(Profiler.CompletionMessage.CompletionStatus.EXTENDABLE), this.self)
   }
 
   private def isPrime(n: Long): Boolean = { // Check for the most basic primes
@@ -87,9 +81,7 @@ class Worker extends AbstractActor {
     if (n % 2 == 0) return false
     // Check the odds
     var i = 3
-    while ( {
-      i * i <= n
-    }) {
+    while (i * i <= n) {
       if (n % i == 0) return false
       i += 2
     }

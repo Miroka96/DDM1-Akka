@@ -53,50 +53,51 @@ object SkynetApp {
         System.exit(1)
     }
   }
-}
 
-private[SkynetApp] object CommandBase {
-  val DEFAULT_MASTER_PORT = 7877
-  val DEFAULT_SLAVE_PORT = 7879
-  val DEFAULT_WORKERS = 4
-}
+  private[SkynetApp] abstract class CommandBase {
+    @Parameter(names = Array("-h", "--host"), description = "this machine's host name or IP to bind against")
+    private[SkynetApp] var host: String = this.getDefaultHost
+    @Parameter(names = Array("-p", "--port"), description = "port to bind against", required = false)
+    private[SkynetApp] var port: Int = this.getDefaultPort
+    @Parameter(
+      names = Array("-w", "--workers"),
+      description = "number of workers to start locally",
+      required = false)
+    private[SkynetApp] var workers = CommandBase.DEFAULT_WORKERS
 
-import skynet.cluster.CommandBase._
+    private[SkynetApp] def getDefaultHost: String = try
+      InetAddress.getLocalHost.getHostAddress
+    catch {
+      case _: UnknownHostException =>
+        "localhost"
+    }
 
-private[SkynetApp] abstract class CommandBase {
-  @Parameter(names = Array("-h", "--host"), description = "this machine's host name or IP to bind against")
-  private[SkynetApp] val host: String = this.getDefaultHost
-
-  private[SkynetApp] def getDefaultHost: String = try
-    InetAddress.getLocalHost.getHostAddress
-  catch {
-    case _: UnknownHostException =>
-      "localhost"
+    private[SkynetApp] def getDefaultPort: Int
   }
 
-  @Parameter(names = Array("-p", "--port"), description = "port to bind against", required = false)
-  private[SkynetApp] val port: Int = this.getDefaultPort
+  import CommandBase._
 
-  private[SkynetApp] def getDefaultPort :Int
+  @Parameters(commandDescription = "start a master actor system")
+  private[SkynetApp] class MasterCommand extends CommandBase {
+    override private[SkynetApp] def getDefaultPort: Int = DEFAULT_MASTER_PORT
+  }
 
-  @Parameter(
-    names = Array("-w", "--workers"),
-    description = "number of workers to start locally",
-    required = false)
-  private[SkynetApp] val workers = DEFAULT_WORKERS
+  @Parameters(commandDescription = "start a slave actor system")
+  private[SkynetApp] class SlaveCommand extends CommandBase {
+    @Parameter(names = Array("-mp", "--masterport"), description = "port of the master", required = false)
+    private[SkynetApp] var masterport = DEFAULT_MASTER_PORT
+    @Parameter(names = Array("-mh", "--masterhost"), description = "host name or IP of the master", required = true)
+    private[SkynetApp] var masterhost = null
+
+    override private[SkynetApp] def getDefaultPort: Int = DEFAULT_SLAVE_PORT
+  }
+
+  private[SkynetApp] object CommandBase {
+    val DEFAULT_MASTER_PORT = 7877
+    val DEFAULT_SLAVE_PORT = 7879
+    val DEFAULT_WORKERS = 4
+  }
+
 }
 
-@Parameters(commandDescription = "start a master actor system")
-private[SkynetApp] class MasterCommand extends CommandBase {
-  override private[SkynetApp] def getDefaultPort: Int = DEFAULT_MASTER_PORT
-}
 
-@Parameters(commandDescription = "start a slave actor system")
-private[SkynetApp] class SlaveCommand extends CommandBase {
-  override private[SkynetApp] def getDefaultPort: Int = DEFAULT_SLAVE_PORT
-
-  @Parameter(names = Array("-mp", "--masterport"), description = "port of the master", required = false)
-  private[SkynetApp] val masterport = DEFAULT_MASTER_PORT
-  @Parameter(names = Array("-mh", "--masterhost"), description = "host name or IP of the master", required = true)
-  private[SkynetApp] val masterhost = null
-}

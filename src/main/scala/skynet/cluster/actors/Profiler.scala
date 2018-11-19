@@ -4,7 +4,6 @@ import java.util
 
 import akka.actor.{AbstractActor, ActorRef, Props, Terminated}
 import akka.event.Logging
-import skynet.cluster.actors.Profiler.CompletionMessage.status._
 import skynet.cluster.actors.Profiler.TaskMessage
 
 object Profiler { ////////////////////////
@@ -26,13 +25,13 @@ object Profiler { ////////////////////////
   }
 
   @SerialVersionUID(-6823011111281387872L)
-  case class CompletionMessage(result: CompletionMessage.status.CompletionStatus) {
+  case class CompletionMessage(result: CompletionMessage.CompletionStatus.CompletionStatus) {
 
   }
 
   object CompletionMessage {
 
-    object status extends Enumeration {
+    object CompletionStatus extends Enumeration {
       type CompletionStatus = Value
       val MINIMAL, EXTENDABLE, FALSE, FAILED = Value
     }
@@ -108,6 +107,7 @@ class Profiler extends AbstractActor {
     val worker = this.sender
     val work = this.busyWorkers.remove(worker)
     log.info("Completed: [{},{}]", util.Arrays.toString(work.x), util.Arrays.toString(work.y))
+    import skynet.cluster.actors.Profiler.CompletionMessage.CompletionStatus._
     message match {
       case MINIMAL =>
         report(work)
@@ -132,10 +132,10 @@ class Profiler extends AbstractActor {
     if (next < task.attributes - 1) {
       val xNew = util.Arrays.copyOf(x, x.length + 1)
       xNew(x.length) = next
-      this.assign(new Worker.WorkMessage(xNew, y))
+      assign(Worker.WorkMessage(xNew, y))
       val yNew = util.Arrays.copyOf(y, y.length + 1)
       yNew(y.length) = next
-      this.assign(new Worker.WorkMessage(x, yNew))
+      assign(Worker.WorkMessage(x, yNew))
     }
   }
 }
