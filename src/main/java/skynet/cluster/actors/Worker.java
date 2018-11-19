@@ -1,7 +1,5 @@
 package skynet.cluster.actors;
 
-import java.io.Serializable;
-
 import akka.actor.AbstractActor;
 import akka.actor.Props;
 import akka.cluster.Cluster;
@@ -11,9 +9,10 @@ import akka.cluster.Member;
 import akka.cluster.MemberStatus;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import skynet.cluster.OctopusMaster;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+
+import java.io.Serializable;
 
 public class Worker extends AbstractActor {
 

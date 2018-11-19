@@ -1,7 +1,8 @@
 package skynet.cluster
 
 import java.net.{InetAddress, UnknownHostException}
-import com.beust.jcommander.{JCommander, ParameterException, Parameter, Parameters}
+
+import com.beust.jcommander.{JCommander, Parameter, ParameterException, Parameters}
 
 
 object SkynetApp {
@@ -13,8 +14,8 @@ object SkynetApp {
 
     val jCommander = JCommander
       .newBuilder
-      .addCommand(OctopusMaster.MASTER_ROLE, masterCommand)
-      .addCommand(OctopusSlave.SLAVE_ROLE, slaveCommand)
+      .addCommand(SkynetMaster.MASTER_ROLE, masterCommand)
+      .addCommand(SkynetSlave.SLAVE_ROLE, slaveCommand)
       .build
 
     try {
@@ -23,15 +24,15 @@ object SkynetApp {
       if (jCommander.getParsedCommand == null) throw new ParameterException("No command given.")
 
       jCommander.getParsedCommand match {
-        case OctopusMaster.MASTER_ROLE =>
-          OctopusMaster.start(
+        case SkynetMaster.MASTER_ROLE =>
+          SkynetMaster.start(
             ACTOR_SYSTEM_NAME,
             masterCommand.workers,
             masterCommand.host,
             masterCommand.port)
 
-        case OctopusSlave.SLAVE_ROLE =>
-          OctopusSlave.start(
+        case SkynetSlave.SLAVE_ROLE =>
+          SkynetSlave.start(
             ACTOR_SYSTEM_NAME,
             slaveCommand.workers,
             slaveCommand.host,
@@ -60,7 +61,7 @@ private[SkynetApp] object CommandBase {
   val DEFAULT_WORKERS = 4
 }
 
-import CommandBase._
+import skynet.cluster.CommandBase._
 
 private[SkynetApp] abstract class CommandBase {
   @Parameter(names = Array("-h", "--host"), description = "this machine's host name or IP to bind against")
