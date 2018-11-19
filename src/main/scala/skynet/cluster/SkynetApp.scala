@@ -55,22 +55,18 @@ object SkynetApp {
   }
 
   private[SkynetApp] abstract class CommandBase {
+
     @Parameter(names = Array("-h", "--host"), description = "this machine's host name or IP to bind against")
-    private[SkynetApp] var host: String = this.getDefaultHost
+    private[SkynetApp] var host: String = CommandBase.DEFAULT_HOST
+
     @Parameter(names = Array("-p", "--port"), description = "port to bind against", required = false)
     private[SkynetApp] var port: Int = this.getDefaultPort
+
     @Parameter(
       names = Array("-w", "--workers"),
       description = "number of workers to start locally",
       required = false)
     private[SkynetApp] var workers = CommandBase.DEFAULT_WORKERS
-
-    private[SkynetApp] def getDefaultHost: String = try
-      InetAddress.getLocalHost.getHostAddress
-    catch {
-      case _: UnknownHostException =>
-        "localhost"
-    }
 
     private[SkynetApp] def getDefaultPort: Int
   }
@@ -84,10 +80,12 @@ object SkynetApp {
 
   @Parameters(commandDescription = "start a slave actor system")
   private[SkynetApp] class SlaveCommand extends CommandBase {
+
     @Parameter(names = Array("-mp", "--masterport"), description = "port of the master", required = false)
     private[SkynetApp] var masterport = DEFAULT_MASTER_PORT
-    @Parameter(names = Array("-mh", "--masterhost"), description = "host name or IP of the master", required = true)
-    private[SkynetApp] var masterhost: String = _
+
+    @Parameter(names = Array("-mh", "--masterhost"), description = "host name or IP of the master", required = false)
+    private[SkynetApp] var masterhost: String = DEFAULT_HOST
 
     override private[SkynetApp] def getDefaultPort: Int = DEFAULT_SLAVE_PORT
   }
@@ -96,6 +94,14 @@ object SkynetApp {
     val DEFAULT_MASTER_PORT = 7877
     val DEFAULT_SLAVE_PORT = 7879
     val DEFAULT_WORKERS = 4
+    val DEFAULT_HOST: String = getDefaultHost
+
+    private def getDefaultHost: String = try
+      InetAddress.getLocalHost.getHostAddress
+    catch {
+      case _: UnknownHostException =>
+        "localhost"
+    }
   }
 
 }
