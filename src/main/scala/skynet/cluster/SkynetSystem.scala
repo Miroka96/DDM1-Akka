@@ -11,13 +11,14 @@ import scala.concurrent.duration.Duration
 
 
 trait SkynetSystem {
+  // Create the Config with fallback to the application config
   protected def createConfiguration(actorSystemName: String,
                                     actorSystemRole: String,
                                     host: String,
                                     port: Int,
                                     masterhost: String,
                                     masterport: Int
-                                   ): Config = { // Create the Config with fallback to the application config
+                                   ): Config = {
     ConfigFactory.parseString(
       "akka.remote.netty.tcp.hostname = \"" + host + "\"\n"
         + "akka.remote.netty.tcp.port = " + port + "\n"
@@ -32,27 +33,23 @@ trait SkynetSystem {
     val system = ActorSystem.create(actorSystemName, config)
 
     // Register a callback that ends the program when the ActorSystem terminates
-    system.registerOnTermination(new Runnable() {
-      override def run(): Unit = {
-        System.exit(0)
-      }
+    system.registerOnTermination(() => {
+      System.exit(0)
     })
 
     // Register a callback that terminates the ActorSystem when it is detached from the cluster
-    Cluster.get(system).registerOnMemberRemoved(new Runnable() {
-      override def run(): Unit = {
-        system.terminate
-        new Thread() {
-          override def run(): Unit = {
-            try
-              Await.ready(system.whenTerminated, Duration.create(10, TimeUnit.SECONDS))
-            catch {
-              case e: Exception =>
-                System.exit(-1)
-            }
+    Cluster.get(system).registerOnMemberRemoved(() => {
+      system.terminate
+      new Thread() {
+        override def run(): Unit = {
+          try
+            Await.ready(system.whenTerminated, Duration.create(10, TimeUnit.SECONDS))
+          catch {
+            case _: Exception =>
+              System.exit(-1)
           }
-        }.start()
-      }
+        }
+      }.start()
     })
     system
   }

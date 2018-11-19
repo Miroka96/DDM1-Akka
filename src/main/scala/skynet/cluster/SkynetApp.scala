@@ -70,7 +70,7 @@ private[SkynetApp] abstract class CommandBase {
   private[SkynetApp] def getDefaultHost: String = try
     InetAddress.getLocalHost.getHostAddress
   catch {
-    case e: UnknownHostException =>
+    case _: UnknownHostException =>
       "localhost"
   }
 
