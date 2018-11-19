@@ -1,4 +1,4 @@
-package de.hpi.octopus;
+package skynet.cluster;
 
 import java.util.concurrent.TimeUnit;
 

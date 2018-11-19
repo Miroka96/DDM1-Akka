@@ -1,4 +1,4 @@
-package de.hpi.octopus.actors;
+package skynet.cluster.actors;
 
 import java.io.Serializable;
 
@@ -11,9 +11,7 @@ import akka.cluster.Member;
 import akka.cluster.MemberStatus;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import de.hpi.octopus.OctopusMaster;
-import de.hpi.octopus.actors.Profiler.CompletionMessage;
-import de.hpi.octopus.actors.Profiler.RegistrationMessage;
+import skynet.cluster.OctopusMaster;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -91,7 +89,7 @@ public class Worker extends AbstractActor {
 		if (member.hasRole(OctopusMaster.MASTER_ROLE))
 			this.getContext()
 				.actorSelection(member.address() + "/user/" + Profiler.DEFAULT_NAME)
-				.tell(new RegistrationMessage(), this.self());
+				.tell(new Profiler.RegistrationMessage(), this.self());
 	}
 
 	private void handle(WorkMessage message) {
@@ -102,7 +100,7 @@ public class Worker extends AbstractActor {
 		
 		this.log.info("done: " + y);
 		
-		this.sender().tell(new CompletionMessage(CompletionMessage.status.EXTENDABLE), this.self());
+		this.sender().tell(new Profiler.CompletionMessage(Profiler.CompletionMessage.status.EXTENDABLE), this.self());
 	}
 	
 	private boolean isPrime(long n) {

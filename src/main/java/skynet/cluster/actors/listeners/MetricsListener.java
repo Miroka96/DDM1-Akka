@@ -1,4 +1,4 @@
-package de.hpi.octopus.actors.listeners;
+package skynet.cluster.actors.listeners;
 
 import akka.actor.AbstractActor;
 import akka.actor.Props;

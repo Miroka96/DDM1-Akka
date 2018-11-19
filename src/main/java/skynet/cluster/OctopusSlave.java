@@ -1,11 +1,11 @@
-package de.hpi.octopus;
+package skynet.cluster;
 
 import com.typesafe.config.Config;
 
 import akka.actor.ActorSystem;
 import akka.cluster.Cluster;
-import de.hpi.octopus.actors.Worker;
-import de.hpi.octopus.actors.listeners.MetricsListener;
+import skynet.cluster.actors.Worker;
+import skynet.cluster.actors.listeners.MetricsListener;
 
 public class OctopusSlave extends OctopusSystem {
 

@@ -1,4 +1,4 @@
-package de.hpi.octopus;
+package skynet.cluster;
 
 import java.util.Scanner;
 
@@ -7,9 +7,9 @@ import com.typesafe.config.Config;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.cluster.Cluster;
-import de.hpi.octopus.actors.Profiler;
-import de.hpi.octopus.actors.Worker;
-import de.hpi.octopus.actors.listeners.ClusterListener;
+import skynet.cluster.actors.Profiler;
+import skynet.cluster.actors.Worker;
+import skynet.cluster.actors.listeners.ClusterListener;
 
 public class OctopusMaster extends OctopusSystem {
 	
