@@ -87,7 +87,7 @@ object SkynetApp {
     @Parameter(names = Array("-mp", "--masterport"), description = "port of the master", required = false)
     private[SkynetApp] var masterport = DEFAULT_MASTER_PORT
     @Parameter(names = Array("-mh", "--masterhost"), description = "host name or IP of the master", required = true)
-    private[SkynetApp] var masterhost = null
+    private[SkynetApp] var masterhost: String = _
 
     override private[SkynetApp] def getDefaultPort: Int = DEFAULT_SLAVE_PORT
   }
