@@ -5,7 +5,7 @@ import java.util.Scanner
 import akka.actor.ActorRef
 import akka.cluster.Cluster
 import skynet.cluster.actors.listeners.{ClusterListener, MetricsListener}
-import skynet.cluster.actors.{Profiler, Worker}
+import skynet.cluster.actors.{WorkManager, Worker}
 
 
 object SkynetMaster extends SkynetSystem {
@@ -19,7 +19,7 @@ object SkynetMaster extends SkynetSystem {
       system.actorOf(ClusterListener.props, ClusterListener.DEFAULT_NAME)
       system.actorOf(MetricsListener.props, MetricsListener.DEFAULT_NAME)
 
-      system.actorOf(Profiler.props, Profiler.DEFAULT_NAME)
+      system.actorOf(WorkManager.props, WorkManager.DEFAULT_NAME)
       for (i <- 0 until workers) {
         system.actorOf(Worker.props, Worker.DEFAULT_NAME + i)
       }
@@ -37,6 +37,6 @@ object SkynetMaster extends SkynetSystem {
     val line = scanner.nextLine
     scanner.close()
     val attributes = line.toInt
-    system.actorSelection("/user/" + Profiler.DEFAULT_NAME).tell(Profiler.TaskMessage(attributes), ActorRef.noSender)
+    system.actorSelection("/user/" + WorkManager.DEFAULT_NAME).tell(WorkManager.TaskMessage(attributes), ActorRef.noSender)
   }
 }

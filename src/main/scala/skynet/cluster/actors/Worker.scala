@@ -62,8 +62,8 @@ class Worker extends AbstractActor {
 
   private def register(member: Member): Unit = {
     if (member.hasRole(SkynetMaster.MASTER_ROLE))
-      getContext.actorSelection(member.address + "/user/" + Profiler.DEFAULT_NAME)
-        .tell(new Profiler.RegistrationMessage, self)
+      getContext.actorSelection(member.address + "/user/" + WorkManager.DEFAULT_NAME)
+        .tell(new WorkManager.RegistrationMessage, self)
   }
 
   private def handleWork(message: Worker.WorkMessage): Unit = {
@@ -72,7 +72,7 @@ class Worker extends AbstractActor {
       if (isPrime(i)) y = y + i
     }
     this.log.info("done: " + y)
-    this.sender.tell(new Profiler.CompletionMessage(Profiler.CompletionMessage.CompletionStatus.EXTENDABLE), this.self)
+    this.sender.tell(new WorkManager.CompletionMessage(WorkManager.CompletionMessage.EXTENDABLE), this.self)
   }
 
   private def isPrime(n: Long): Boolean = { // Check for the most basic primes
