@@ -1,6 +1,7 @@
 package skynet.cluster.actors
 
 import akka.event.LoggingAdapter
+import skynet.cluster.actors.ExerciseTask.CSVPerson
 
 
 // a task message triggers the distribution of work through work messages, whose results come back as result messages
@@ -24,13 +25,13 @@ abstract class ResultMessage {
 
 }
 
-case class ExerciseTask() extends TaskMessage {
+case class ExerciseTask(persons: Array[CSVPerson]) extends TaskMessage
 
+object ExerciseTask {
   case class CSVPerson(
                         id: String,
                         name: String,
                         password: String,
                         gene: String
                       )
-
 }
