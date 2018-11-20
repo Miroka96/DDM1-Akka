@@ -45,5 +45,4 @@ class Worker extends AbstractWorker
     sender.tell(result, self)
   }
 
-
 }

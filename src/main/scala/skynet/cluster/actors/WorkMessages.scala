@@ -8,7 +8,12 @@ import skynet.cluster.actors.ExerciseTask.CSVPerson
 
 @SerialVersionUID(1L)
 abstract class TaskMessage {
+  def toProcessingState: TaskState
+}
 
+@SerialVersionUID(1L)
+abstract class TaskState {
+  val message: TaskMessage
 }
 
 @SerialVersionUID(1L)
@@ -25,7 +30,11 @@ abstract class ResultMessage {
 
 }
 
-case class ExerciseTask(persons: Array[CSVPerson]) extends TaskMessage
+case class ExerciseTask(persons: Array[CSVPerson]) extends TaskMessage {
+  override def toProcessingState: ExerciseTaskState = ExerciseTaskState(this)
+}
+
+case class ExerciseTaskState(message: ExerciseTask) extends TaskState
 
 object ExerciseTask {
   case class CSVPerson(

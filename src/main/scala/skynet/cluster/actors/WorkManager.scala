@@ -5,6 +5,8 @@ import akka.cluster.Member
 import akka.event.Logging
 import skynet.cluster.SkynetMaster
 
+import scala.collection.mutable
+
 // once per Master
 object WorkManager {
   ////////////////////////
@@ -30,7 +32,7 @@ class WorkManager extends AbstractActor {
   final private val unassignedWork = new java.util.LinkedList[WorkMessage]
   final private val idleWorkers = new java.util.LinkedList[ActorRef]
   final private val busyWorkers = new java.util.HashMap[ActorRef, WorkMessage]
-  private var task: TaskMessage = _
+  final private val tasks = new mutable.MutableList[TaskState]
 
   // Actor Behavior //
   override def createReceive: AbstractActor.Receive =
@@ -49,10 +51,8 @@ class WorkManager extends AbstractActor {
   }
 
   private def handleTask(message: TaskMessage): Unit = {
-    if (task != null)
-      log.error("The profiler actor can process only one task in its current implementation!")
+    tasks += message.toProcessingState
 
-    task = message
     assignWork(null)
   }
 
