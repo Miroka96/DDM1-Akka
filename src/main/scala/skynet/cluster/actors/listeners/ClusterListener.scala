@@ -1,8 +1,8 @@
 package skynet.cluster.actors.listeners
 
 import akka.actor.{AbstractActor, Props}
-import akka.cluster.{Cluster, ClusterEvent}
-import akka.event.{Logging, LoggingAdapter}
+import akka.cluster.ClusterEvent
+import skynet.cluster.actors.AbstractWorker
 
 
 object ClusterListener {
@@ -15,12 +15,7 @@ object ClusterListener {
   def props: Props = Props.create(classOf[ClusterListener])
 }
 
-class ClusterListener extends AbstractActor {
-  /////////////////
-  // Actor State //
-  /////////////////
-  final private val log: LoggingAdapter = Logging.getLogger(context.system, this)
-  final private val cluster = Cluster.get(context.system)
+class ClusterListener extends AbstractWorker {
 
   /////////////////////
   // Actor Lifecycle //
@@ -29,9 +24,6 @@ class ClusterListener extends AbstractActor {
     cluster.subscribe(self, classOf[ClusterEvent.MemberEvent], classOf[ClusterEvent.UnreachableMember])
   }
 
-  override def postStop(): Unit = {
-    cluster.unsubscribe(self)
-  }
 
   ////////////////////
   // Actor Behavior //

@@ -5,12 +5,14 @@ import java.util.concurrent.TimeUnit
 import akka.actor.ActorSystem
 import akka.cluster.Cluster
 import com.typesafe.config.{Config, ConfigFactory}
+import skynet.cluster.actors.Worker
+import skynet.cluster.actors.listeners.{ClusterListener, MetricsListener}
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
 
-trait SkynetSystem {
+abstract class SkynetSystem {
   // Create the Config with fallback to the application config
   protected def createConfiguration(actorSystemName: String,
                                     actorSystemRole: String,
@@ -53,4 +55,18 @@ trait SkynetSystem {
     })
     system
   }
+
+  protected final def spawnBackbone(system: ActorSystem, workerCount: Int): Unit = {
+    system.actorOf(ClusterListener.props, ClusterListener.DEFAULT_NAME)
+    system.actorOf(MetricsListener.props, MetricsListener.DEFAULT_NAME)
+
+    spawnSpecialBackbone(system)
+
+    for (i <- 0 until workerCount) {
+      system.actorOf(Worker.props, Worker.DEFAULT_NAME + i)
+    }
+  }
+
+  protected def spawnSpecialBackbone(system: ActorSystem): Unit = {}
+
 }

@@ -1,28 +1,19 @@
 package skynet.cluster
 
-import java.util.Scanner
-
-import akka.actor.ActorRef
+import akka.actor.{ActorRef, ActorSystem}
 import akka.cluster.Cluster
-import skynet.cluster.actors.listeners.{ClusterListener, MetricsListener}
-import skynet.cluster.actors.{WorkManager, Worker}
+import skynet.cluster.actors.{TaskMessage, WorkManager}
 
 
 object SkynetMaster extends SkynetSystem {
   val MASTER_ROLE = "master"
 
-  def start(actorSystemName: String, workers: Int, host: String, port: Int): Unit = {
+  def start(actorSystemName: String, workers: Int, host: String, port: Int, inputFilename: String): Unit = {
     val config = createConfiguration(actorSystemName, MASTER_ROLE, host, port, host, port)
-    val system = createSystem(actorSystemName, config)
+    val system: ActorSystem = createSystem(actorSystemName, config)
 
     Cluster.get(system).registerOnMemberUp(() => {
-      system.actorOf(ClusterListener.props, ClusterListener.DEFAULT_NAME)
-      system.actorOf(MetricsListener.props, MetricsListener.DEFAULT_NAME)
-
-      system.actorOf(WorkManager.props, WorkManager.DEFAULT_NAME)
-      for (i <- 0 until workers) {
-        system.actorOf(Worker.props, Worker.DEFAULT_NAME + i)
-      }
+      spawnBackbone(system, workers)
 
       //	int maxInstancesPerNode = workers; // TODO: Every node gets the same number of workers, so it cannot be a parameter for the slave nodes
       //	Set<String> useRoles = new HashSet<>(Arrays.asList("master", "slave"));
@@ -33,10 +24,16 @@ object SkynetMaster extends SkynetSystem {
       //		.props(Props.create(Worker.class)), "router");
     })
 
-    val scanner = new Scanner(System.in)
-    val line = scanner.nextLine
-    scanner.close()
-    val attributes = line.toInt
-    system.actorSelection("/user/" + WorkManager.DEFAULT_NAME).tell(WorkManager.TaskMessage(attributes), ActorRef.noSender)
+    system.actorSelection("/user/" + WorkManager.DEFAULT_NAME)
+      .tell(getInitialTask(inputFilename), ActorRef.noSender)
+  }
+
+  protected def getInitialTask(filename: String): TaskMessage = {
+
+    null
+  }
+
+  override def spawnSpecialBackbone(system: ActorSystem): Unit = {
+    system.actorOf(WorkManager.props, WorkManager.DEFAULT_NAME)
   }
 }

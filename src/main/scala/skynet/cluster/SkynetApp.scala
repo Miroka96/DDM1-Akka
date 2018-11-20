@@ -29,7 +29,8 @@ object SkynetApp {
             ACTOR_SYSTEM_NAME,
             masterCommand.workers,
             masterCommand.host,
-            masterCommand.port)
+            masterCommand.port,
+            masterCommand.inputFilename)
 
         case SkynetSlave.SLAVE_ROLE =>
           SkynetSlave.start(
@@ -76,6 +77,9 @@ object SkynetApp {
   @Parameters(commandDescription = "start a master actor system")
   private[SkynetApp] class MasterCommand extends CommandBase {
     override private[SkynetApp] def getDefaultPort: Int = DEFAULT_MASTER_PORT
+
+    @Parameter(names = Array("-i", "--input"), description = "input csv", required = false)
+    private[SkynetApp] var inputFilename = "students.csv"
   }
 
   @Parameters(commandDescription = "start a slave actor system")
