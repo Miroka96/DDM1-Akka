@@ -3,6 +3,7 @@ package skynet.cluster.actors
 import akka.actor.{Actor, ActorRef, Props, Terminated}
 import akka.cluster.Member
 import skynet.cluster.SkynetMaster
+import skynet.cluster.actors.WorkManager.RegistrationMessage
 import skynet.cluster.actors.util.ErrorHandling
 
 import scala.collection.mutable
@@ -35,7 +36,7 @@ class WorkManager extends Actor with ErrorHandling {
 
   // Actor Behavior //
   override def receive: Receive = {
-    case WorkManager.RegistrationMessage => handleRegistration()
+    case _: RegistrationMessage => handleRegistration()
     case m: Terminated => handleTermination(m)
     case m: TaskMessage => handleTask(m)
     case m: ResultMessage => handleTaskResult(m)
@@ -50,7 +51,7 @@ class WorkManager extends Actor with ErrorHandling {
 
   private def handleTask(message: TaskMessage): Unit = {
     tasks += message.toProcessingState
-
+    // TODO
     assignWork(null)
   }
 
