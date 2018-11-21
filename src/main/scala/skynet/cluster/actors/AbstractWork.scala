@@ -34,6 +34,18 @@ abstract class WorkMessage {
   protected def logFailure(log: LoggingAdapter): Unit = log.warning("Failed: {}", this)
 }
 
+abstract class WorkState {
+  val dependencies: List[WorkState]
+  var done = false
+
+  def isSatisfied: Boolean = {
+    for (dep <- dependencies) {
+      if (!dep.done) return false
+    }
+    true
+  }
+}
+
 @SerialVersionUID(1L)
 abstract class ResultMessage {
 

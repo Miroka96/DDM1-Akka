@@ -14,8 +14,10 @@ case class ExerciseTask(persons: Array[CSVPerson]) extends TaskMessage {
 case class ExerciseTaskState(override val message: ExerciseTask)
   extends TaskState(message) {
 
-  val persons: Array[CrackedPerson] =
-    message.persons.map(csvPerson => CrackedPerson(csvPerson))
+  val persons: Map[Int, CrackedPerson] =
+    message.persons
+      .map(csvPerson => (csvPerson.id, CrackedPerson(csvPerson)))
+      .toMap
 
 }
 
