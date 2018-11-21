@@ -38,7 +38,7 @@ object ExerciseTask {
   case class CSVPerson(
                         id: Int,
                         name: String,
-                        password: String,
+                        passwordhash: String,
                         gene: String
                       )
 
