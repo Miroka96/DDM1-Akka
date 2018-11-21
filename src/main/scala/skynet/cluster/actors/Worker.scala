@@ -45,4 +45,7 @@ class Worker extends AbstractWorker
     sender.tell(result, self)
   }
 
+  override protected def masterFound(): Unit = {
+    workManager.tell("lolololol", self)
+  }
 }
