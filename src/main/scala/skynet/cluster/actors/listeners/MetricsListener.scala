@@ -1,9 +1,9 @@
 package skynet.cluster.actors.listeners
 
-import akka.actor.{Actor, Props}
+import akka.actor.Props
+import akka.cluster.ClusterEvent
 import akka.cluster.metrics.{ClusterMetricsChanged, ClusterMetricsExtension, NodeMetrics, StandardMetrics}
-import akka.cluster.{Cluster, ClusterEvent}
-import akka.event.Logging
+import skynet.cluster.actors.AbstractWorker
 import skynet.cluster.actors.util.ErrorHandling
 
 
@@ -16,23 +16,22 @@ object MetricsListener {
   def props: Props = Props.create(classOf[MetricsListener])
 }
 
-class MetricsListener extends Actor with ErrorHandling {
+class MetricsListener extends AbstractWorker with ErrorHandling {
   /////////////////
   // Actor State //
   /////////////////
-  final private val log = Logging.getLogger(context.system, this)
-  final private val cluster = Cluster.get(context.system)
+
   final private val extension = ClusterMetricsExtension.get(context.system)
 
   /////////////////////
   // Actor Lifecycle //
   /////////////////////
   override def preStart(): Unit = {
-    this.extension.subscribe(self)
+    extension.subscribe(self)
   }
 
   override def postStop(): Unit = {
-    this.extension.unsubscribe(self)
+    extension.unsubscribe(self)
   }
 
   ////////////////////

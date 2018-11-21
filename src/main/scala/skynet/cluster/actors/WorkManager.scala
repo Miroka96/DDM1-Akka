@@ -2,7 +2,6 @@ package skynet.cluster.actors
 
 import akka.actor.{Actor, ActorRef, Props, Terminated}
 import akka.cluster.Member
-import akka.event.Logging
 import skynet.cluster.SkynetMaster
 import skynet.cluster.actors.util.ErrorHandling
 
@@ -29,7 +28,6 @@ class WorkManager extends Actor with ErrorHandling {
   /////////////////
   // Actor State //
   /////////////////
-  final private val log = Logging.getLogger(context.system, this)
   final private val unassignedWork = new java.util.LinkedList[WorkMessage]
   final private val idleWorkers = new java.util.LinkedList[ActorRef]
   final private val busyWorkers = new java.util.HashMap[ActorRef, WorkMessage]

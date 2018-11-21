@@ -1,9 +1,9 @@
 package skynet.cluster.actors.util
 
 import akka.cluster.{ClusterEvent, Member, MemberStatus}
-import skynet.cluster.actors.{AbstractWorker, RegistrationProcess}
+import skynet.cluster.actors.{Logging, RegistrationProcess}
 
-trait ErrorHandling extends AbstractWorker {
+trait ErrorHandling extends Logging {
   protected def messageNotUnderstood(o: Any): Unit = {
     log.info("Received unknown message: \"{}\"", o.toString)
   }
