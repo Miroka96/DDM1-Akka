@@ -1,6 +1,6 @@
 package skynet.cluster.actors
 
-import akka.actor.{AbstractActor, Props}
+import akka.actor.Props
 import akka.cluster.ClusterEvent
 import skynet.cluster.actors.tasks.PasswordCracking
 import skynet.cluster.actors.util.{ErrorHandling, RegistrationHandling}
@@ -31,14 +31,14 @@ class Worker extends AbstractWorker
   with RegistrationHandling
   with PasswordCracking
   with ErrorHandling {
+
   // Actor Behavior //
-  override def createReceive: AbstractActor.Receive =
-    receiveBuilder
-      .`match`(classOf[ClusterEvent.CurrentClusterState], handleClusterState)
-      .`match`(classOf[ClusterEvent.MemberUp], handleMemberUp)
-      .`match`(classOf[WorkMessage], handleWork)
-      .matchAny(messageNotUnderstood)
-      .build
+  override def receive: Receive = {
+    case m: ClusterEvent.CurrentClusterState => handleClusterState(m)
+    case m: ClusterEvent.MemberUp => handleMemberUp(m)
+    case m: WorkMessage => handleWork(m)
+    case m => messageNotUnderstood(m)
+  }
 
   private def handleWork(message: WorkMessage): Unit = {
     val result = message.runOn(this)

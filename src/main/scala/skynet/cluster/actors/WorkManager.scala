@@ -1,9 +1,10 @@
 package skynet.cluster.actors
 
-import akka.actor.{AbstractActor, ActorRef, Props, Terminated}
+import akka.actor.{Actor, ActorRef, Props, Terminated}
 import akka.cluster.Member
 import akka.event.Logging
 import skynet.cluster.SkynetMaster
+import skynet.cluster.actors.util.ErrorHandling
 
 import scala.collection.mutable
 
@@ -24,27 +25,26 @@ object WorkManager {
 
 }
 
-class WorkManager extends AbstractActor {
+class WorkManager extends Actor with ErrorHandling {
   /////////////////
   // Actor State //
   /////////////////
-  final private val log = Logging.getLogger(getContext.system, this)
+  final private val log = Logging.getLogger(context.system, this)
   final private val unassignedWork = new java.util.LinkedList[WorkMessage]
   final private val idleWorkers = new java.util.LinkedList[ActorRef]
   final private val busyWorkers = new java.util.HashMap[ActorRef, WorkMessage]
   final private val tasks = new mutable.MutableList[TaskState]
 
   // Actor Behavior //
-  override def createReceive: AbstractActor.Receive =
-    receiveBuilder
-      .`match`(classOf[WorkManager.RegistrationMessage], handleRegistration)
-      .`match`(classOf[Terminated], handleTermination)
-      .`match`(classOf[TaskMessage], handleTask)
-      .`match`(classOf[ResultMessage], handleTaskResult)
-      .matchAny((`object`: Any) => log.info("Received unknown message: \"{}\"", `object`.toString))
-      .build
+  override def receive: Receive = {
+    case WorkManager.RegistrationMessage => handleRegistration()
+    case m: Terminated => handleTermination(m)
+    case m: TaskMessage => handleTask(m)
+    case m: ResultMessage => handleTaskResult(m)
+    case m => messageNotUnderstood(m)
+  }
 
-  private def handleRegistration(message: WorkManager.RegistrationMessage): Unit = {
+  private def handleRegistration(): Unit = {
     context.watch(sender)
     assignWorker(sender)
     log.info("Registered {}", sender)
@@ -100,13 +100,13 @@ class WorkManager extends AbstractActor {
 
 }
 
-trait RegistrationProcess extends AbstractActor {
+trait RegistrationProcess extends Actor {
   protected def eventuallyRegister(member: Member): Unit = {
     if (member.hasRole(SkynetMaster.MASTER_ROLE)) registerAtManager(member)
   }
 
   protected def registerAtManager(master: Member): Unit = {
-    getContext.actorSelection(master.address + "/user/" + WorkManager.DEFAULT_NAME)
+    context.actorSelection(master.address + "/user/" + WorkManager.DEFAULT_NAME)
       .tell(new WorkManager.RegistrationMessage, self)
   }
 }

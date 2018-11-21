@@ -2,8 +2,9 @@ package skynet.cluster
 
 import akka.actor.{ActorRef, ActorSystem}
 import akka.cluster.Cluster
-import skynet.cluster.actors.ExerciseTask.CSVPerson
-import skynet.cluster.actors.{ExerciseTask, TaskMessage, WorkManager}
+import skynet.cluster.actors.tasks.ExerciseTask
+import skynet.cluster.actors.tasks.ExerciseTask.CSVPerson
+import skynet.cluster.actors.{TaskMessage, WorkManager}
 
 import scala.io.Source
 
@@ -37,7 +38,7 @@ object SkynetMaster extends SkynetSystem {
       .drop(1)
       .map(line => {
         val parts = line.split(";")
-        CSVPerson(parts(0), parts(1), parts(2), parts(3))
+        CSVPerson(parts(0).toInt, parts(1), parts(2), parts(3))
       })
       .toArray
     ExerciseTask(persons)

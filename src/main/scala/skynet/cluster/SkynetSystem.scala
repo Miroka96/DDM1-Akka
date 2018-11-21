@@ -62,9 +62,9 @@ abstract class SkynetSystem {
 
     spawnSpecialBackbone(system)
 
-    for (i <- 0 until workerCount) {
+    (0 until workerCount).foreach(i =>
       system.actorOf(Worker.props, Worker.DEFAULT_NAME + i)
-    }
+    )
   }
 
   protected def spawnSpecialBackbone(system: ActorSystem): Unit = {}

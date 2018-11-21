@@ -1,9 +1,10 @@
 package skynet.cluster.actors.listeners
 
-import akka.actor.{AbstractActor, Props}
+import akka.actor.{Actor, Props}
 import akka.cluster.metrics.{ClusterMetricsChanged, ClusterMetricsExtension, NodeMetrics, StandardMetrics}
 import akka.cluster.{Cluster, ClusterEvent}
 import akka.event.Logging
+import skynet.cluster.actors.util.ErrorHandling
 
 
 object MetricsListener {
@@ -15,13 +16,13 @@ object MetricsListener {
   def props: Props = Props.create(classOf[MetricsListener])
 }
 
-class MetricsListener extends AbstractActor {
+class MetricsListener extends Actor with ErrorHandling {
   /////////////////
   // Actor State //
   /////////////////
-  final private val log = Logging.getLogger(getContext.system, this)
-  final private val cluster = Cluster.get(getContext.system)
-  final private val extension = ClusterMetricsExtension.get(getContext.system)
+  final private val log = Logging.getLogger(context.system, this)
+  final private val cluster = Cluster.get(context.system)
+  final private val extension = ClusterMetricsExtension.get(context.system)
 
   /////////////////////
   // Actor Lifecycle //
@@ -37,11 +38,11 @@ class MetricsListener extends AbstractActor {
   ////////////////////
   // Actor Behavior //
   ////////////////////
-  override def createReceive: AbstractActor.Receive =
-    receiveBuilder
-      .`match`(classOf[ClusterMetricsChanged], logMetrics)
-      .`match`(classOf[ClusterEvent.CurrentClusterState], (message: ClusterEvent.CurrentClusterState) => {})
-      .build
+  override def receive: Receive = {
+    case m: ClusterMetricsChanged => logMetrics(m)
+    case _: ClusterEvent.CurrentClusterState => ignoreMessage
+    case m => messageNotUnderstood(m)
+  }
 
   private def logMetrics(clusterMetrics: ClusterMetricsChanged): Unit = {
     import scala.collection.JavaConversions._

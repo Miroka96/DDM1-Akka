@@ -1,8 +1,9 @@
 package skynet.cluster.actors.listeners
 
-import akka.actor.{AbstractActor, Props}
+import akka.actor.Props
 import akka.cluster.ClusterEvent
 import skynet.cluster.actors.AbstractWorker
+import skynet.cluster.actors.util.ErrorHandling
 
 
 object ClusterListener {
@@ -15,7 +16,7 @@ object ClusterListener {
   def props: Props = Props.create(classOf[ClusterListener])
 }
 
-class ClusterListener extends AbstractWorker {
+class ClusterListener extends AbstractWorker with ErrorHandling {
 
   /////////////////////
   // Actor Lifecycle //
@@ -28,16 +29,15 @@ class ClusterListener extends AbstractWorker {
   ////////////////////
   // Actor Behavior //
   ////////////////////
-  override def createReceive: AbstractActor.Receive =
-    receiveBuilder.`match`(classOf[ClusterEvent.CurrentClusterState], (state: ClusterEvent.CurrentClusterState) => {
+  override def receive: Receive = {
+    case state: ClusterEvent.CurrentClusterState =>
       log.info("Current members: {}", state.members)
-    }).`match`(classOf[ClusterEvent.MemberUp], (mUp: ClusterEvent.MemberUp) => {
+    case mUp: ClusterEvent.MemberUp =>
       log.info("Member is Up: {}", mUp.member)
-    }).`match`(classOf[ClusterEvent.UnreachableMember], (mUnreachable: ClusterEvent.UnreachableMember) => {
+    case mUnreachable: ClusterEvent.UnreachableMember =>
       log.info("Member detected as unreachable: {}", mUnreachable.member)
-    }).`match`(classOf[ClusterEvent.MemberRemoved], (mRemoved: ClusterEvent.MemberRemoved) => {
+    case mRemoved: ClusterEvent.MemberRemoved =>
       log.info("Member is Removed: {}", mRemoved.member)
-    }).`match`(classOf[ClusterEvent.MemberEvent], (message: ClusterEvent.MemberEvent) => {
-      // ignore
-    }).build
+    case _: ClusterEvent.MemberEvent => ignoreMessage
+  }
 }

@@ -7,6 +7,9 @@ trait ErrorHandling extends AbstractWorker {
   protected def messageNotUnderstood(o: Any): Unit = {
     log.info("Received unknown message: \"{}\"", o.toString)
   }
+
+  protected def ignoreMessage: Unit = {}
+
 }
 
 trait RegistrationHandling extends RegistrationProcess {
