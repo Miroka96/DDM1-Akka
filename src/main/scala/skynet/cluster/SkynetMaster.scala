@@ -33,9 +33,9 @@ object SkynetMaster extends SkynetSystem {
   }
 
   protected def getInitialTask(filename: String): TaskMessage = {
-    val file = Source.fromFile("/tmp/finance.csv")
+    val file = Source.fromFile(filename)
     val persons = file.getLines()
-      .drop(1)
+      .drop(1).filterNot(line => line == "")
       .map(line => {
         val parts = line.split(";")
         CSVPerson(parts(0).toInt, parts(1), parts(2), parts(3))
