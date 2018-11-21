@@ -6,7 +6,7 @@ import akka.actor.ActorSystem
 import akka.cluster.Cluster
 import com.typesafe.config.{Config, ConfigFactory}
 import skynet.cluster.actors.Worker
-import skynet.cluster.actors.listeners.{ClusterListener, MetricsListener}
+import skynet.cluster.actors.listeners.ClusterListener
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -58,7 +58,7 @@ abstract class SkynetSystem {
 
   protected final def spawnBackbone(system: ActorSystem, workerCount: Int): Unit = {
     system.actorOf(ClusterListener.props, ClusterListener.DEFAULT_NAME)
-    system.actorOf(MetricsListener.props, MetricsListener.DEFAULT_NAME)
+    //system.actorOf(MetricsListener.props, MetricsListener.DEFAULT_NAME)
 
     spawnSpecialBackbone(system)
 
