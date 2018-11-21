@@ -2,10 +2,10 @@ package skynet.cluster.actors
 
 import akka.actor.Actor
 import akka.cluster.{Cluster, ClusterEvent}
-import akka.event.{Logging, LoggingAdapter}
+import akka.event.LoggingAdapter
 
 trait Logging extends Actor {
-  final protected val log: LoggingAdapter = Logging.getLogger(context.system, this)
+  final protected val log: LoggingAdapter = akka.event.Logging.getLogger(context.system, this)
 }
 
 abstract class AbstractWorker extends Actor with Logging {
