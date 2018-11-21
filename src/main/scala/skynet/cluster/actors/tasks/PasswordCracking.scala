@@ -7,11 +7,16 @@ import skynet.cluster.actors.{ResultMessage, WorkMessage, Worker}
 
 trait PasswordCracking {
 
+  var passwordHashesCache: Map[String, Int] = _
+
   def crack(work: PasswordCrackingWork): PasswordCrackingResult = {
+    work.passwordhashes
+      .foreach(hashes => passwordHashesCache = hashes)
+
     val foundPairs = (work.testpasswordStart to work.testpasswordEnd)
       .flatMap(password => {
         val hash = hashPassword(password)
-        work.passwordhashes
+        passwordHashesCache
           .get(hash)
           .map(userId => (userId, password))
           .toList
@@ -44,7 +49,7 @@ trait PasswordCracking {
   }
 }
 
-case class PasswordCrackingWork(passwordhashes: Map[String, Int],
+case class PasswordCrackingWork(passwordhashes: Option[Map[String, Int]],
                                 // first number to test
                                 testpasswordStart: Int,
                                 // last number to test
