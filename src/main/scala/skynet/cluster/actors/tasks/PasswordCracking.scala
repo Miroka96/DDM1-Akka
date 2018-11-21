@@ -7,6 +7,8 @@ import skynet.cluster.actors.{ResultMessage, WorkMessage, Worker}
 
 trait PasswordCracking {
 
+  // would be nice, if it is only sent once to every host
+  // and internally distributed to the workers
   var passwordHashesCache: Map[String, Int] = _
 
   def crack(work: PasswordCrackingWork): PasswordCrackingResult = {

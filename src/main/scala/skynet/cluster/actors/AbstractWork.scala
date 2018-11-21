@@ -37,6 +37,7 @@ abstract class WorkMessage {
 abstract class WorkState {
   val dependencies: List[WorkState]
   var done = false
+  var started = false
 
   def isSatisfied: Boolean = {
     for (dep <- dependencies) {
