@@ -6,7 +6,7 @@ import akka.event.LoggingAdapter
 // whose results come back as result messages
 
 @SerialVersionUID(1L)
-abstract class TaskMessage {
+abstract class TaskMessage(val slaveCount: Int) {
   def toProcessingState: TaskState
 }
 

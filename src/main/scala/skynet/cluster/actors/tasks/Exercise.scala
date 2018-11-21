@@ -4,7 +4,7 @@ import skynet.cluster.actors.tasks.ExerciseTask.CSVPerson
 import skynet.cluster.actors.tasks.ExerciseTaskState.CrackedPerson
 import skynet.cluster.actors.{TaskMessage, TaskState}
 
-case class ExerciseTask(persons: Array[CSVPerson]) extends TaskMessage {
+case class ExerciseTask(persons: Array[CSVPerson], override val slaveCount: Int) extends TaskMessage(slaveCount) {
   val maxPassword = 1000000
   val prefixLength = 5
 

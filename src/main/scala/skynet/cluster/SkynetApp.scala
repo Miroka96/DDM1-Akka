@@ -30,7 +30,9 @@ object SkynetApp {
             masterCommand.workers,
             masterCommand.host,
             masterCommand.port,
-            masterCommand.inputFilename)
+            masterCommand.inputFilename,
+            masterCommand.slaveCount,
+          )
 
         case SkynetSlave.SLAVE_ROLE =>
           SkynetSlave.start(
@@ -80,6 +82,9 @@ object SkynetApp {
 
     @Parameter(names = Array("-i", "--input"), description = "input csv", required = false)
     private[SkynetApp] var inputFilename = "students.csv"
+
+    @Parameter(names = Array("-s", "--slaves"), description = "number of slave systems to wait for", required = false)
+    private[SkynetApp] var slaveCount = 1
   }
 
   @Parameters(commandDescription = "start a slave actor system")

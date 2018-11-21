@@ -6,8 +6,6 @@ import skynet.cluster.SkynetMaster
 import skynet.cluster.actors.WorkManager.RegistrationMessage
 import skynet.cluster.actors.util.ErrorHandling
 
-import scala.collection.mutable
-
 // once per Master
 object WorkManager {
   ////////////////////////
@@ -32,7 +30,9 @@ class WorkManager extends Actor with ErrorHandling {
   final private val unassignedWork = new java.util.LinkedList[WorkMessage]
   final private val idleWorkers = new java.util.LinkedList[ActorRef]
   final private val busyWorkers = new java.util.HashMap[ActorRef, WorkMessage]
-  final private val tasks = new mutable.MutableList[TaskState]
+  final private var currentTask: TaskState = _
+
+  private var waiting = true
 
   // Actor Behavior //
   override def receive: Receive = {
@@ -50,7 +50,8 @@ class WorkManager extends Actor with ErrorHandling {
   }
 
   private def handleTask(message: TaskMessage): Unit = {
-    tasks += message.toProcessingState
+    currentTask = message.toProcessingState
+
     // TODO
     assignWork(null)
   }

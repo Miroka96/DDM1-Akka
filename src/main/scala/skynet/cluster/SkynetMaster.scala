@@ -12,12 +12,12 @@ import scala.io.Source
 object SkynetMaster extends SkynetSystem {
   val MASTER_ROLE = "master"
 
-  def start(actorSystemName: String, workers: Int, host: String, port: Int, inputFilename: String): Unit = {
+  def start(actorSystemName: String, workerCount: Int, host: String, port: Int, inputFilename: String, slaveCount: Int): Unit = {
     val config = createConfiguration(actorSystemName, MASTER_ROLE, host, port, host, port)
     val system: ActorSystem = createSystem(actorSystemName, config)
 
     Cluster.get(system).registerOnMemberUp(() => {
-      spawnBackbone(system, workers)
+      spawnBackbone(system, workerCount)
 
       //	int maxInstancesPerNode = workers; // TODO: Every node gets the same number of workers, so it cannot be a parameter for the slave nodes
       //	Set<String> useRoles = new HashSet<>(Arrays.asList("master", "slave"));
@@ -29,10 +29,10 @@ object SkynetMaster extends SkynetSystem {
     })
 
     system.actorSelection("/user/" + WorkManager.DEFAULT_NAME)
-      .tell(getInitialTask(inputFilename), ActorRef.noSender)
+      .tell(getInitialTask(inputFilename, slaveCount), ActorRef.noSender)
   }
 
-  protected def getInitialTask(filename: String): TaskMessage = {
+  protected def getInitialTask(filename: String, slaveCount: Int): TaskMessage = {
     val file = Source.fromFile(filename)
     val persons = file.getLines()
       .drop(1).filterNot(line => line == "")
@@ -41,7 +41,7 @@ object SkynetMaster extends SkynetSystem {
         CSVPerson(parts(0).toInt, parts(1), parts(2), parts(3))
       })
       .toArray
-    ExerciseTask(persons)
+    ExerciseTask(persons, slaveCount)
   }
 
   override def spawnSpecialBackbone(system: ActorSystem): Unit = {
