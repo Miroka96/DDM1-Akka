@@ -24,7 +24,7 @@ object WorkManager {
   @SerialVersionUID(4545299661052078209L)
   case class RegistrationMessage()
 
-  case class WelcomeMessage(systemIdentifier: String, workerCount: Int)
+  final case class WelcomeMessage(systemIdentifier: String, workerCount: Int)
 
 }
 
@@ -67,6 +67,8 @@ class WorkManager extends Actor with ErrorHandling {
   }
 
   def handleWelcome(m: WelcomeMessage): Unit = {
+    println(m)
+    println("randalleeeeee")
     expectedWorkers.put(m.systemIdentifier, m.workerCount)
   }
 

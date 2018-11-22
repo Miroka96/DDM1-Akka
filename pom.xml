@@ -157,6 +157,11 @@
             <version>0.9.3</version>
         </dependency>
         <dependency>
+            <groupId>com.github.romix.akka</groupId>
+            <artifactId>akka-kryo-serialization_2.12</artifactId>
+            <version>0.5.2</version>
+        </dependency>
+        <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>1.18.2</version>
