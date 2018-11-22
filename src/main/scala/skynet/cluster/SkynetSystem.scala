@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit
 import akka.actor.ActorSystem
 import akka.cluster.Cluster
 import com.typesafe.config.{Config, ConfigFactory}
+import skynet.cluster.actors.WorkManager.CSVPerson
 import skynet.cluster.actors.Worker
 import skynet.cluster.actors.listeners.ClusterListener
 
@@ -56,17 +57,17 @@ abstract class SkynetSystem {
     system
   }
 
-  protected final def spawnBackbone(system: ActorSystem, workerCount: Int): Unit = {
+  protected final def spawnBackbone(system: ActorSystem, workerCount: Int, slaveNodeCount: Int = 0, dataSet: Array[CSVPerson] = null): Unit = {
     system.actorOf(ClusterListener.props, ClusterListener.DEFAULT_NAME)
     //system.actorOf(MetricsListener.props, MetricsListener.DEFAULT_NAME)
 
-    spawnSpecialBackbone(system)
+    spawnSpecialBackbone(system, workerCount, slaveNodeCount, dataSet)
 
     (0 until workerCount).foreach(i =>
       system.actorOf(Worker.props, Worker.DEFAULT_NAME + i)
     )
   }
 
-  protected def spawnSpecialBackbone(system: ActorSystem): Unit = {}
+  protected def spawnSpecialBackbone(system: ActorSystem, workerCount: Int, slaveNodeCount: Int, dataSet: Array[CSVPerson]): Unit = {}
 
 }

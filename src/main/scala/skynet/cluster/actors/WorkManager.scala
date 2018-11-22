@@ -3,11 +3,11 @@ package skynet.cluster.actors
 import akka.actor.{Actor, ActorRef, ActorSelection, Props, Terminated}
 import akka.cluster.Member
 import skynet.cluster.SkynetMaster
-import skynet.cluster.actors.WorkManager.{RegistrationMessage, WelcomeMessage}
 import skynet.cluster.actors.util.ErrorHandling
-
-import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
+import skynet.cluster.util.WorkerPool
+import WorkManager._
+import skynet.cluster.actors.Messages.PasswordCrackingMessage
+import skynet.cluster.actors.jobs.PasswordJob
 
 // once per Master
 object WorkManager {
@@ -16,30 +16,33 @@ object WorkManager {
   ////////////////////////
   val DEFAULT_NAME = "profiler"
 
-  def props: Props = Props.create(classOf[WorkManager])
+  def props(localWorkers: Int, slaveNodeCount: Int, dataSet: Array[CSVPerson]): Props =
+    Props(new WorkManager(localWorkers, slaveNodeCount, dataSet))
 
   ////////////////////
   // Actor Messages //
   ////////////////////
-  @SerialVersionUID(4545299661052078209L)
   case class RegistrationMessage()
 
-  final case class WelcomeMessage(systemIdentifier: String, workerCount: Int)
+  case class WelcomeMessage(systemIdentifier: String, workerCount: Int)
+
+  case class CSVPerson(id: Int, name: String, passwordhash: String, gene: String)
+
+  case class ResultMessage()
+
 
 }
 
-class WorkManager extends Actor with ErrorHandling {
+
+class WorkManager(localWorkerCount: Int, slaveNodeCount: Int, dataSet: Array[CSVPerson]) extends Actor with ErrorHandling {
+
+
   /////////////////
   // Actor State //
   /////////////////
-  final private val unassignedWork = new java.util.LinkedList[WorkMessage]
-  final private val idleWorkers = new ArrayBuffer[ActorRef]
-  final private val busyWorkers = new java.util.HashMap[ActorRef, WorkMessage]
-  final private var currentTask: TaskState = _
-  final private val expectedWorkers = new mutable.HashMap[String, Int]
-  final private val expectedSlaves = 0
-
-  private var waiting = true
+  //final private val unassignedWork = new java.util.LinkedList[WorkMessage]
+  //final private val busyWorkers = new java.util.HashMap[ActorRef, WorkMessage]
+  private val workerPool = new WorkerPool(slaveNodeCount)
 
 
   // Actor Behavior //
@@ -47,52 +50,52 @@ class WorkManager extends Actor with ErrorHandling {
     case _: RegistrationMessage => handleRegistration()
     case m: WelcomeMessage => handleWelcome(m)
     case m: Terminated => handleTermination(m)
-    case m: TaskMessage => handleTask(m)
-    case m: ResultMessage => handleTaskResult(m)
-    case m: Int => println(m, "deine Muddda")
+   // case m: ResultMessage => handleTaskResult(m)
     case m => messageNotUnderstood(m)
   }
 
   private def handleRegistration(): Unit = {
     context.watch(sender)
-
-    idleWorkers.append(sender)
+    /*idleWorkers.append(sender)
 
     if (idleWorkers.size >= expectedWorkers.values.sum) {
      for (worker <- idleWorkers) {
         assignWorker(worker)
       }
-    }
-
+    }*/
+    workerPool.workerConnected(sender())
+    if (workerPool.isReadyToStart) startWork()
     log.info("Registered {}", sender)
   }
 
   def handleWelcome(m: WelcomeMessage): Unit = {
-    println(m)
-    println("randalleeeeee")
-    expectedWorkers.put(m.systemIdentifier, m.workerCount)
+    workerPool.slaveConnected(m.workerCount)
+    if (workerPool.isReadyToStart) startWork()
+    println("local w count ", localWorkerCount, "slave c", slaveNodeCount, "csv ", dataSet, m)
   }
 
-  private def handleTask(message: TaskMessage): Unit = {
-    currentTask = message.toProcessingState
+  private def startWork(): Unit = {
+    val messages = PasswordJob.splitBetween(workerPool.numberOfIdleWorkers)
+    println("jetzt gehts looos")
+    for((worker, message ) <- workerPool.idleWorkers zip messages){
+      worker.tell(messages, self)
+    }
 
-    // TODO
-    //assignWork(null)
   }
 
   private def handleTermination(message: Terminated): Unit = {
     context.unwatch(message.getActor)
-
+    /*
     if (!idleWorkers.contains(message.getActor)) {
       val work = busyWorkers.remove(message.getActor)
       if (work != null) assignWork(work)
     } else {
       idleWorkers -= message.getActor
-    }
+    }*/
     log.info("Unregistered {}", message.getActor)
   }
 
-  private def assignWork(work: WorkMessage): Unit = {
+  /*  private def assignWork(work: WorkMessage): Unit = {
     val worker = idleWorkers.remove(0)
     if (worker == null) {
       unassignedWork.add(work)
@@ -125,6 +128,7 @@ class WorkManager extends Actor with ErrorHandling {
     log.info("UCC: {}", work)
   }
 
+*/
 }
 
 trait RegistrationProcess extends Actor {
@@ -151,4 +155,5 @@ trait RegistrationProcess extends Actor {
     workManager.tell(new WorkManager.RegistrationMessage, self)
   }
 }
+
 

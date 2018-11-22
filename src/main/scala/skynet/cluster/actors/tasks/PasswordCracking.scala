@@ -3,29 +3,24 @@ package skynet.cluster.actors.tasks
 import java.io.UnsupportedEncodingException
 import java.security.{MessageDigest, NoSuchAlgorithmException}
 
-import skynet.cluster.actors.{ResultMessage, WorkMessage, Worker}
+import scala.collection.mutable
 
 trait PasswordCracking {
 
-  // would be nice, if it is only sent once to every host
-  // and internally distributed to the workers
-  var passwordHashesCache: Map[String, Int] = _
 
-  def crack(work: PasswordCrackingWork): PasswordCrackingResult = {
-    work.passwordhashes
-      .foreach(hashes => passwordHashesCache = hashes)
+  def crack(hashesAndIds: Map[String, Int], start: Int, end: Int): Map[Int, String] = {
+    val resultMap = mutable.Map[Int, String]()
 
-    val foundPairs = (work.testpasswordStart to work.testpasswordEnd)
-      .flatMap(password => {
-        val hash = hashPassword(password)
-        passwordHashesCache
-          .get(hash)
-          .map(userId => (userId, password))
-          .toList
+    // Todo this could be nicer and directly generate the map
+    (start to end).foreach(password => {
+      val hash = hashPassword(password)
+      hashesAndIds.get(hash).foreach(id => {
+        println("found", hash)
+        resultMap += ((id, hash))
       })
-      .toMap
+    })
 
-    PasswordCrackingResult(foundPairs)
+    resultMap.toMap
   }
 
   private def hashPassword(password: Int): String = try {
@@ -51,20 +46,5 @@ trait PasswordCracking {
   }
 }
 
-case class PasswordCrackingWork(passwordhashes: Option[Map[String, Int]],
-                                // first number to test
-                                testpasswordStart: Int,
-                                // last number to test
-                                testpasswordEnd: Int,
-                               ) extends WorkMessage {
-
-  override def runOn(worker: Worker): ResultMessage = {
-    worker.crack(this)
-  }
-}
-
-// @parameter passwords: a map with user id -> password
-case class PasswordCrackingResult(passwords: Map[Int, Int])
-  extends ResultMessage
 
 
