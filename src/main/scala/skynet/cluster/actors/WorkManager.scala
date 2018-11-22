@@ -7,6 +7,7 @@ import skynet.cluster.actors.WorkManager.{RegistrationMessage, WelcomeMessage}
 import skynet.cluster.actors.util.ErrorHandling
 
 import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 
 // once per Master
 object WorkManager {
@@ -23,7 +24,6 @@ object WorkManager {
   @SerialVersionUID(4545299661052078209L)
   case class RegistrationMessage()
 
-  @SerialVersionUID(1L)
   case class WelcomeMessage(systemIdentifier: String, workerCount: Int)
 
 }
@@ -33,7 +33,7 @@ class WorkManager extends Actor with ErrorHandling {
   // Actor State //
   /////////////////
   final private val unassignedWork = new java.util.LinkedList[WorkMessage]
-  final private val idleWorkers = new java.util.LinkedList[ActorRef]
+  final private val idleWorkers = new ArrayBuffer[ActorRef]
   final private val busyWorkers = new java.util.HashMap[ActorRef, WorkMessage]
   final private var currentTask: TaskState = _
   final private val expectedWorkers = new mutable.HashMap[String, Int]
@@ -48,16 +48,17 @@ class WorkManager extends Actor with ErrorHandling {
     case m: Terminated => handleTermination(m)
     case m: TaskMessage => handleTask(m)
     case m: ResultMessage => handleTaskResult(m)
+    case m: Int => println(m, "deine Muddda")
     case m => messageNotUnderstood(m)
   }
 
   private def handleRegistration(): Unit = {
     context.watch(sender)
 
-    idleWorkers.add(sender)
+    idleWorkers.append(sender)
 
-    if (idleWorkers.size() >= expectedWorkers.values.sum) {
-      for (worker <- idleWorkers) {
+    if (idleWorkers.size >= expectedWorkers.values.sum) {
+     for (worker <- idleWorkers) {
         assignWorker(worker)
       }
     }
@@ -78,15 +79,18 @@ class WorkManager extends Actor with ErrorHandling {
 
   private def handleTermination(message: Terminated): Unit = {
     context.unwatch(message.getActor)
-    if (!idleWorkers.remove(message.getActor)) {
+
+    if (!idleWorkers.contains(message.getActor)) {
       val work = busyWorkers.remove(message.getActor)
       if (work != null) assignWork(work)
+    } else {
+      idleWorkers -= message.getActor
     }
     log.info("Unregistered {}", message.getActor)
   }
 
   private def assignWork(work: WorkMessage): Unit = {
-    val worker = idleWorkers.poll
+    val worker = idleWorkers.remove(0)
     if (worker == null) {
       unassignedWork.add(work)
       return
@@ -106,7 +110,7 @@ class WorkManager extends Actor with ErrorHandling {
   private def assignWorker(worker: ActorRef): Unit = {
     val work = unassignedWork.poll()
     if (work == null) {
-      idleWorkers.add(worker)
+      idleWorkers += worker
       return
     }
 
