@@ -37,6 +37,7 @@ class WorkManager extends Actor with ErrorHandling {
   final private val busyWorkers = new java.util.HashMap[ActorRef, WorkMessage]
   final private var currentTask: TaskState = _
   final private val expectedWorkers = new mutable.HashMap[String, Int]
+  final private val expectedSlaves = 0
 
   private var waiting = true
 
