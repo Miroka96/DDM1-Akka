@@ -10,7 +10,7 @@ abstract class Job {
 
 object PasswordJob extends Job {
   override def splitBetween(nrOfWorkers: Int): Seq[PasswordCrackingMessage] = {
-    var highestPassword = 10^6
+    var highestPassword = Math.pow(10,6).toInt
     val stepSize = (highestPassword/nrOfWorkers).ceil.toInt
     // -> stepSize * nrOFWorkers >= highestPassword
     val messages = new ArrayBuffer[PasswordCrackingMessage]

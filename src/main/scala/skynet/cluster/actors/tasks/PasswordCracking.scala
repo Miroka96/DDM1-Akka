@@ -9,18 +9,26 @@ trait PasswordCracking {
 
 
   def crack(hashesAndIds: Map[String, Int], start: Int, end: Int): Map[Int, String] = {
+    // This should be wrapped in  a future but I am not sure if we need a special dispatcher and how we send back results
+
+    println("start cracking")
     val resultMap = mutable.Map[Int, String]()
 
     // Todo this could be nicer and directly generate the map
     (start to end).foreach(password => {
       val hash = hashPassword(password)
+      println(password, " hash", hash)
       hashesAndIds.get(hash).foreach(id => {
-        println("found", hash)
+        println("found", hash, password, id)
         resultMap += ((id, hash))
       })
     })
 
     resultMap.toMap
+  }
+
+  def test(): Unit ={
+    println("hola")
   }
 
   private def hashPassword(password: Int): String = try {

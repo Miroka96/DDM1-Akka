@@ -6,14 +6,15 @@ import skynet.cluster.actors.jobs.PasswordJob
 
 import scala.collection.mutable.ArrayBuffer
 
-class WorkerPool(private var slaveCount: Int) {
+class WorkerPool(private var slaveCount: Int, localWorkers: Int) {
   private var unconnectedSlaves: Int = slaveCount
-  private var unconnectedWorkers: Int = 0
+  private var unconnectedWorkers: Int = localWorkers
   val idleWorkers = new ArrayBuffer[ActorRef]
 
   def workerConnected(worker: ActorRef): Unit = {
     this.unconnectedWorkers -= 1
     idleWorkers += worker
+    if(! isReadyToStart) println("Not all workers connected, missing: ", unconnectedWorkers)
   }
 
   def slaveConnected(workerCount: Int): Unit = {

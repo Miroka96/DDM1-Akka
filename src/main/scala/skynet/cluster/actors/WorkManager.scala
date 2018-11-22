@@ -42,7 +42,7 @@ class WorkManager(localWorkerCount: Int, slaveNodeCount: Int, dataSet: Array[CSV
   /////////////////
   //final private val unassignedWork = new java.util.LinkedList[WorkMessage]
   //final private val busyWorkers = new java.util.HashMap[ActorRef, WorkMessage]
-  private val workerPool = new WorkerPool(slaveNodeCount)
+  private val workerPool = new WorkerPool(slaveNodeCount, localWorkerCount)
 
 
   // Actor Behavior //
@@ -63,6 +63,8 @@ class WorkManager(localWorkerCount: Int, slaveNodeCount: Int, dataSet: Array[CSV
         assignWorker(worker)
       }
     }*/
+    // this might be a bit raceconditiony
+    sender().tell(dataSet, self)
     workerPool.workerConnected(sender())
     if (workerPool.isReadyToStart) startWork()
     log.info("Registered {}", sender)
@@ -75,10 +77,11 @@ class WorkManager(localWorkerCount: Int, slaveNodeCount: Int, dataSet: Array[CSV
   }
 
   private def startWork(): Unit = {
-    val messages = PasswordJob.splitBetween(workerPool.numberOfIdleWorkers)
+    val jobMessages = PasswordJob.splitBetween(workerPool.numberOfIdleWorkers)
     println("jetzt gehts looos")
-    for((worker, message ) <- workerPool.idleWorkers zip messages){
-      worker.tell(messages, self)
+    for((worker, message ) <- workerPool.idleWorkers zip jobMessages){
+      println(message)
+      worker.tell(message, self)
     }
 
   }
