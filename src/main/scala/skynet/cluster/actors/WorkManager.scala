@@ -24,11 +24,7 @@ object WorkManager {
   @SerialVersionUID(4545299661052078209L)
   case class RegistrationMessage()
 
-  case class WelcomeMessage(var systemIdentifier: String, var workerCount: Int) {
-    def this() = this(null, 0)
-
-    override def toString: String = s"$systemIdentifier bringing $workerCount workers"
-  }
+  final case class WelcomeMessage(systemIdentifier: String, workerCount: Int)
 
 }
 
@@ -71,8 +67,9 @@ class WorkManager extends Actor with ErrorHandling {
   }
 
   def handleWelcome(m: WelcomeMessage): Unit = {
+    println(m)
+    println("randalleeeeee")
     expectedWorkers.put(m.systemIdentifier, m.workerCount)
-    log.info("Welcomed {}", m)
   }
 
   private def handleTask(message: TaskMessage): Unit = {
