@@ -61,7 +61,6 @@ class WorkManager(val localWorkerCount: Int,
     sender().tell(ExerciseJobData(dataSet), self)
 
     workerPool.workerConnected(sender())
-    log.info("Registered {}", sender)
 
     if (workerPool.isReadyToStart) {
       startWork()
@@ -71,17 +70,15 @@ class WorkManager(val localWorkerCount: Int,
   def handleWelcome(m: SystemWelcomeMessage): Unit = {
     workerPool.slaveConnected(m.workerCount)
     if (workerPool.isReadyToStart) startWork()
-    println(s"local w count $localWorkerCount slave c $slaveNodeCount csv $dataSet $m")
   }
 
   private def startWork(): Unit = {
     val jobMessages = PasswordJob.splitBetween(workerPool.numberOfIdleWorkers)
     println("starting work ")
     for ((worker, message) <- workerPool.workerPool zip jobMessages) {
-      println(message)
+      println(s"handing out work $message to $worker")
       worker.tell(message, self)
     }
-
   }
 
   private def handlePasswordCrackingResult(m: PasswordCrackingResult): Unit = {

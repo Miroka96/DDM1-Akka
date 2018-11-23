@@ -10,8 +10,7 @@ class WorkerPool(private var slaveCount: Int, localWorkers: Int) {
 
   val workerPool: mutable.Set[ActorRef] = mutable.SortedSet[ActorRef]()
 
-
-  private var expectedSlaves = slaveCount
+  private val expectedSlaves = slaveCount
   private var connectedSlaves = 0
   private var expectedWorkers = localWorkers
   private var connectedWorkers = 0
@@ -19,6 +18,11 @@ class WorkerPool(private var slaveCount: Int, localWorkers: Int) {
   def workerConnected(worker: ActorRef): Unit = {
     connectedWorkers += 1
     addWorker(worker)
+    println(s"Registered new worker $worker")
+    checkPrintStatus()
+  }
+
+  def checkPrintStatus(out: PrintStream = System.out): Unit = {
     if (!isReadyToStart) println("Not everybody connected:")
     printStatus()
   }
@@ -42,6 +46,8 @@ class WorkerPool(private var slaveCount: Int, localWorkers: Int) {
   def slaveConnected(workerCount: Int): Unit = {
     connectedSlaves += 1
     expectedWorkers += workerCount
+    println(s"Registered new slave system with $workerCount workers")
+    checkPrintStatus()
   }
 
   def numberOfIdleWorkers: Int = {
