@@ -7,9 +7,12 @@ import akka.actor.ActorRef
 import scala.collection.{GenIterable, mutable}
 
 class WorkerPool(private var slaveCount: Int, localWorkers: Int) {
+
+  private val workerPool: mutable.Set[ActorRef] = mutable.SortedSet[ActorRef]()
+
   // enables zipping this object
   val zip: GenIterable[Any] => mutable.Set[(ActorRef, Any)] = workerPool.zip _
-  private val workerPool: mutable.Set[ActorRef] = mutable.SortedSet[ActorRef]()
+
   private var expectedSlaves = slaveCount
   private var connectedSlaves = 0
   private var expectedWorkers = localWorkers
@@ -51,6 +54,5 @@ class WorkerPool(private var slaveCount: Int, localWorkers: Int) {
 
   // enables iterating over workerPoolInstances
   def apply: Iterator[ActorRef] = workerPool.toIterator
-
 
 }
