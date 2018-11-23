@@ -6,7 +6,7 @@ import java.security.{MessageDigest, NoSuchAlgorithmException}
 trait PasswordCracking {
 
 
-  def crack(hashesAndIds: Map[String, Int], start: Int, end: Int): Map[Int, String] = {
+  def crack(hashesAndIds: Map[String, Int], start: Int, end: Int): Map[Int, Int] = {
     // This should be wrapped in  a future but I am not sure if we need a special dispatcher and how we send back results
 
     println("start cracking")
@@ -18,7 +18,7 @@ trait PasswordCracking {
           .get(hash)
           .map(userId => {
             println(s"found $hash for $password for $userId")
-            (userId, hash)
+            (userId, password)
           })
       }).toMap
   }

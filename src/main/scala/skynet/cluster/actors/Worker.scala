@@ -20,7 +20,7 @@ object Messages {
 
   case class PasswordCrackingMessage(from: Int, to: Int) extends JobMessage
 
-  case class PasswordCrackingResult(job: PasswordCrackingMessage, result: Map[Int, String]) extends JobResult(job)
+  case class PasswordCrackingResult(job: PasswordCrackingMessage, result: Map[Int, Int]) extends JobResult(job)
 
 }
 

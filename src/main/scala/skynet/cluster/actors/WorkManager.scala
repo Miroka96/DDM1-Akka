@@ -3,11 +3,13 @@ package skynet.cluster.actors
 import akka.actor.{Actor, ActorRef, ActorSelection, Props, Terminated}
 import akka.cluster.Member
 import skynet.cluster.SkynetMaster
-import skynet.cluster.actors.Messages.{ExerciseJobData, PasswordCrackingResult}
+import skynet.cluster.actors.Messages.{ExerciseJobData, JobMessage, PasswordCrackingResult}
 import skynet.cluster.actors.WorkManager._
 import skynet.cluster.actors.jobs.PasswordJob
 import skynet.cluster.actors.util.ErrorHandling
 import skynet.cluster.util.WorkerPool
+
+import scala.collection.mutable
 
 // once per Master
 object WorkManager {
@@ -30,6 +32,12 @@ object WorkManager {
 
   case class ResultMessage()
 
+  case class CrackedPerson(person: CSVPerson,
+                           var password: Int = -1,
+                           var partner: Int = -1,
+                           var prefix: Int = 0,
+                           var nonce: Int = -1,
+                           var hash: String = null)
 
 }
 
@@ -45,6 +53,10 @@ class WorkManager(val localWorkerCount: Int,
   /////////////////
 
   private val workerPool = new WorkerPool(slaveNodeCount, localWorkerCount)
+  private val unassignedWork = mutable.Queue[JobMessage]()
+
+  private val exerciseResult = dataSet.map(person => (person.id, CrackedPerson(person))).toMap
+  private var passwordCrackingFinished = false
 
   // Actor Behavior //
   override def receive: Receive = {
@@ -73,22 +85,44 @@ class WorkManager(val localWorkerCount: Int,
   }
 
   private def startWork(): Unit = {
-    val jobMessages = PasswordJob.splitIntoNMessages(workerPool.numberOfIdleWorkers)
     println("starting work ")
+    val jobMessages = PasswordJob.splitIntoNMessages(workerPool.numberOfIdleWorkers * 3)
+    jobMessages.foreach(unassignedWork.enqueue(_))
 
-    val messageIter: Iterator[Messages.PasswordCrackingMessage] = jobMessages.toIterator
+    assignAvailableWork()
+  }
+
+  private def assignAvailableWork(): Int = {
     val workerIter: Iterator[ActorRef] = workerPool.idleWorkerClaimer
 
-    while (messageIter.hasNext && workerIter.hasNext) {
-      val message = messageIter.next()
+    var assignmentCount = 0
+    while (unassignedWork.nonEmpty && workerIter.hasNext) {
+      val message = unassignedWork.dequeue()
       val worker = workerIter.next()
       println(s"handing out work $message to $worker")
       worker.tell(message, self)
+      assignmentCount += 1
     }
+    assignmentCount
   }
 
   private def handlePasswordCrackingResult(m: PasswordCrackingResult): Unit = {
-    println(s"got $m")
+    println(s"got $m from $sender")
+    workerPool.freeWorker(sender)
+    if (passwordCrackingFinished) return
+
+    m.result.foreach { case (id: Int, password: Int) => exerciseResult(id).password = password }
+
+    assignAvailableWork()
+
+    if (!exerciseResult.exists { case (_, person) => person.password.equals(-1) }) {
+      passwordCrackingFinished = true
+      println("Passwords cracked")
+      exerciseResult
+        .toList
+        .sortBy { case (id, _) => id }
+        .foreach { case (id, person) => println(s"$id: ${person.password}") }
+    }
   }
 
   private def handleTermination(message: Terminated): Unit = {

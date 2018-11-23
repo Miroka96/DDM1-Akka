@@ -8,9 +8,9 @@ import scala.collection.mutable
 
 class WorkerPool(private var slaveCount: Int, localWorkers: Int) {
 
-  val workerPool: mutable.Set[ActorRef] = mutable.Set[ActorRef]()
+  private val workerPool: mutable.Set[ActorRef] = mutable.Set[ActorRef]()
 
-  val idle: mutable.Set[ActorRef] = mutable.LinkedHashSet[ActorRef]()
+  private val idle: mutable.Set[ActorRef] = mutable.LinkedHashSet[ActorRef]()
 
 
   private val expectedSlaves = slaveCount
@@ -80,7 +80,7 @@ class WorkerPool(private var slaveCount: Int, localWorkers: Int) {
   }
 
   def numberOfIdleWorkers: Int = {
-    workerPool.size
+    idle.size
   }
 
   // enables iterating over workerPoolInstances
