@@ -3,7 +3,7 @@ package skynet.cluster
 import akka.actor.ActorRef
 import akka.cluster.Cluster
 import skynet.cluster.actors.WorkManager
-import skynet.cluster.actors.WorkManager.WelcomeMessage
+import skynet.cluster.actors.WorkManager.SystemWelcomeMessage
 
 
 object SkynetSlave extends SkynetSystem {
@@ -26,7 +26,7 @@ object SkynetSlave extends SkynetSystem {
     for (seednode <- Cluster.get(system).settings.SeedNodes) {
       println(seednode)
       system.actorSelection(seednode + "/user/" + WorkManager.DEFAULT_NAME)
-        .tell(WelcomeMessage("%s:%s".format(host, port), workerCount), ActorRef.noSender)
+        .tell(SystemWelcomeMessage("%s:%s".format(host, port), workerCount), ActorRef.noSender)
     }
 
   }

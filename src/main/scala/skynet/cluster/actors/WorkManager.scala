@@ -1,13 +1,13 @@
 package skynet.cluster.actors
 
-import akka.actor.{Actor, ActorRef, ActorSelection, Props, Terminated}
+import akka.actor.{Actor, ActorSelection, Props, Terminated}
 import akka.cluster.Member
 import skynet.cluster.SkynetMaster
+import skynet.cluster.actors.Messages.PasswordCrackingResult
+import skynet.cluster.actors.WorkManager._
+import skynet.cluster.actors.jobs.PasswordJob
 import skynet.cluster.actors.util.ErrorHandling
 import skynet.cluster.util.WorkerPool
-import WorkManager._
-import skynet.cluster.actors.Messages.PasswordCrackingMessage
-import skynet.cluster.actors.jobs.PasswordJob
 
 // once per Master
 object WorkManager {
@@ -24,7 +24,7 @@ object WorkManager {
   ////////////////////
   case class RegistrationMessage()
 
-  case class WelcomeMessage(systemIdentifier: String, workerCount: Int)
+  case class SystemWelcomeMessage(systemIdentifier: String, workerCount: Int)
 
   case class CSVPerson(id: Int, name: String, passwordhash: String, gene: String)
 
@@ -48,9 +48,9 @@ class WorkManager(localWorkerCount: Int, slaveNodeCount: Int, dataSet: Array[CSV
   // Actor Behavior //
   override def receive: Receive = {
     case _: RegistrationMessage => handleRegistration()
-    case m: WelcomeMessage => handleWelcome(m)
+    case m: SystemWelcomeMessage => handleWelcome(m)
     case m: Terminated => handleTermination(m)
-   // case m: ResultMessage => handleTaskResult(m)
+    case m: PasswordCrackingResult => handlePasswordCrackingResult(m)
     case m => messageNotUnderstood(m)
   }
 
@@ -70,7 +70,7 @@ class WorkManager(localWorkerCount: Int, slaveNodeCount: Int, dataSet: Array[CSV
     log.info("Registered {}", sender)
   }
 
-  def handleWelcome(m: WelcomeMessage): Unit = {
+  def handleWelcome(m: SystemWelcomeMessage): Unit = {
     workerPool.slaveConnected(m.workerCount)
     if (workerPool.isReadyToStart) startWork()
     println("local w count ", localWorkerCount, "slave c", slaveNodeCount, "csv ", dataSet, m)
@@ -84,6 +84,11 @@ class WorkManager(localWorkerCount: Int, slaveNodeCount: Int, dataSet: Array[CSV
       worker.tell(message, self)
     }
 
+  }
+
+  private def handlePasswordCrackingResult(m: PasswordCrackingResult): Unit = {
+    println("got it")
+    println(m)
   }
 
   private def handleTermination(message: Terminated): Unit = {

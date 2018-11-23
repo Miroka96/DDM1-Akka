@@ -3,8 +3,6 @@ package skynet.cluster.actors.tasks
 import java.io.UnsupportedEncodingException
 import java.security.{MessageDigest, NoSuchAlgorithmException}
 
-import scala.collection.mutable
-
 trait PasswordCracking {
 
 
@@ -12,22 +10,21 @@ trait PasswordCracking {
     // This should be wrapped in  a future but I am not sure if we need a special dispatcher and how we send back results
 
     println("start cracking")
-    val resultMap = mutable.Map[Int, String]()
 
-    // Todo this could be nicer and directly generate the map
-    (start to end).foreach(password => {
-      val hash = hashPassword(password)
-      println(password, " hash", hash)
-      hashesAndIds.get(hash).foreach(id => {
-        println("found", hash, password, id)
-        resultMap += ((id, hash))
-      })
-    })
-
-    resultMap.toMap
+    (start to end)
+      .flatMap(password => {
+        val hash = hashPassword(password)
+        println(password, " hash", hash)
+        hashesAndIds
+          .get(hash)
+          .map(userId => {
+            println("found", hash, password, userId)
+            (userId, hash)
+          })
+      }).toMap
   }
 
-  def test(): Unit ={
+  def test(): Unit = {
     println("hola")
   }
 
