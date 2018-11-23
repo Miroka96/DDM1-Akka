@@ -17,7 +17,7 @@ trait PasswordCracking {
         hashesAndIds
           .get(hash)
           .map(userId => {
-            println("found", hash, password, userId)
+            println(s"found $hash for $password for $userId")
             (userId, hash)
           })
       }).toMap

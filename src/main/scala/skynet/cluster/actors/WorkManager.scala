@@ -1,6 +1,6 @@
 package skynet.cluster.actors
 
-import akka.actor.{Actor, ActorSelection, Props, Terminated}
+import akka.actor.{Actor, ActorRef, ActorSelection, Props, Terminated}
 import akka.cluster.Member
 import skynet.cluster.SkynetMaster
 import skynet.cluster.actors.Messages.{ExerciseJobData, PasswordCrackingResult}
@@ -73,16 +73,22 @@ class WorkManager(val localWorkerCount: Int,
   }
 
   private def startWork(): Unit = {
-    val jobMessages = PasswordJob.splitBetween(workerPool.numberOfIdleWorkers)
+    val jobMessages = PasswordJob.splitIntoNMessages(workerPool.numberOfIdleWorkers)
     println("starting work ")
-    for ((worker, message) <- workerPool.workerPool zip jobMessages) {
+
+    val messageIter: Iterator[Messages.PasswordCrackingMessage] = jobMessages.toIterator
+    val workerIter: Iterator[ActorRef] = workerPool.idleWorkerClaimer
+
+    while (messageIter.hasNext && workerIter.hasNext) {
+      val message = messageIter.next()
+      val worker = workerIter.next()
       println(s"handing out work $message to $worker")
       worker.tell(message, self)
     }
   }
 
   private def handlePasswordCrackingResult(m: PasswordCrackingResult): Unit = {
-    println("got $m")
+    println(s"got $m")
   }
 
   private def handleTermination(message: Terminated): Unit = {
