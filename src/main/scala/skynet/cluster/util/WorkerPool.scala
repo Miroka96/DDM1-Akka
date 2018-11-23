@@ -84,6 +84,6 @@ class WorkerPool(private var slaveCount: Int, localWorkers: Int) {
   }
 
   // enables iterating over workerPoolInstances
-  def apply: Iterator[ActorRef] = workerPool.toIterator
+  def apply(): Iterator[ActorRef] = workerPool.toIterator
 
 }

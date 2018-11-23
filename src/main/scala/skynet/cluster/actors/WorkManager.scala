@@ -3,7 +3,7 @@ package skynet.cluster.actors
 import akka.actor.{Actor, ActorRef, ActorSelection, Props, Terminated}
 import akka.cluster.Member
 import skynet.cluster.SkynetMaster
-import skynet.cluster.actors.Messages.{ExerciseJobData, JobMessage, PasswordCrackingResult}
+import skynet.cluster.actors.Messages._
 import skynet.cluster.actors.WorkManager._
 import skynet.cluster.actors.jobs.PasswordJob
 import skynet.cluster.actors.util.ErrorHandling
@@ -85,7 +85,7 @@ class WorkManager(val localWorkerCount: Int,
   }
 
   private def startWork(): Unit = {
-    println("starting work ")
+    log.info("starting work ")
     val jobMessages = PasswordJob.splitIntoNMessages(workerPool.numberOfIdleWorkers * 3)
     jobMessages.foreach(unassignedWork.enqueue(_))
 
@@ -99,7 +99,7 @@ class WorkManager(val localWorkerCount: Int,
     while (unassignedWork.nonEmpty && workerIter.hasNext) {
       val message = unassignedWork.dequeue()
       val worker = workerIter.next()
-      println(s"handing out work $message to $worker")
+      log.info(s"handing out work $message to $worker")
       worker.tell(message, self)
       assignmentCount += 1
     }
@@ -107,7 +107,7 @@ class WorkManager(val localWorkerCount: Int,
   }
 
   private def handlePasswordCrackingResult(m: PasswordCrackingResult): Unit = {
-    println(s"got $m from $sender")
+    log.info(s"got $m from $sender")
     workerPool.freeWorker(sender)
     if (passwordCrackingFinished) return
 
@@ -117,12 +117,19 @@ class WorkManager(val localWorkerCount: Int,
 
     if (!exerciseResult.exists { case (_, person) => person.password.equals(-1) }) {
       passwordCrackingFinished = true
-      println("Passwords cracked")
-      exerciseResult
+      log.info("Passwords cracked")
+      val resultList = exerciseResult
         .toList
         .sortBy { case (id, _) => id }
-        .foreach { case (id, person) => println(s"$id: ${person.password}") }
+
+      val passwordList = resultList.map(_._2.password).toArray
+      distributeData(PasswordData(passwordList))
+      resultList.foreach { case (id, person) => log.info(s"$id: ${person.password}") }
     }
+  }
+
+  private def distributeData(data: JobData): Unit = {
+    workerPool().foreach(_.tell(data, self))
   }
 
   private def handleTermination(message: Terminated): Unit = {

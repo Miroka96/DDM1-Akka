@@ -19,8 +19,9 @@ object Messages {
   case class ExerciseJobData(data: Array[CSVPerson]) extends JobData
 
   case class PasswordCrackingMessage(from: Int, to: Int) extends JobMessage
-
   case class PasswordCrackingResult(job: PasswordCrackingMessage, result: Map[Int, Int]) extends JobResult(job)
+
+  case class PasswordData(passwords: Array[Int]) extends JobData
 
 }
 
