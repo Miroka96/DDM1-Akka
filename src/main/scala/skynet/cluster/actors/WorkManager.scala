@@ -44,7 +44,6 @@ class WorkManager(localWorkerCount: Int, slaveNodeCount: Int, dataSet: Array[CSV
   //final private val busyWorkers = new java.util.HashMap[ActorRef, WorkMessage]
   private val workerPool = new WorkerPool(slaveNodeCount, localWorkerCount)
 
-
   // Actor Behavior //
   override def receive: Receive = {
     case _: RegistrationMessage => handleRegistration()
@@ -79,7 +78,7 @@ class WorkManager(localWorkerCount: Int, slaveNodeCount: Int, dataSet: Array[CSV
   private def startWork(): Unit = {
     val jobMessages = PasswordJob.splitBetween(workerPool.numberOfIdleWorkers)
     println("jetzt gehts looos")
-    for((worker, message ) <- workerPool.idleWorkers zip jobMessages){
+    for ((worker, message) <- workerPool zip jobMessages) {
       println(message)
       worker.tell(message, self)
     }
