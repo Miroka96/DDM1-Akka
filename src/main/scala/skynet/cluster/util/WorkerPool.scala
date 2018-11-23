@@ -4,14 +4,12 @@ import java.io.PrintStream
 
 import akka.actor.ActorRef
 
-import scala.collection.{GenIterable, mutable}
+import scala.collection.mutable
 
 class WorkerPool(private var slaveCount: Int, localWorkers: Int) {
 
-  private val workerPool: mutable.Set[ActorRef] = mutable.SortedSet[ActorRef]()
+  val workerPool: mutable.Set[ActorRef] = mutable.SortedSet[ActorRef]()
 
-  // enables zipping this object
-  val zip: GenIterable[Any] => mutable.Set[(ActorRef, Any)] = workerPool.zip _
 
   private var expectedSlaves = slaveCount
   private var connectedSlaves = 0
@@ -26,9 +24,7 @@ class WorkerPool(private var slaveCount: Int, localWorkers: Int) {
   }
 
   def printStatus(out: PrintStream = System.out): Unit = {
-    println(
-      "\nSlaves:", connectedSlaves, "/", expectedSlaves,
-      "\nWorkers:", connectedWorkers, "/", expectedWorkers)
+    out.println(s"Slaves: $connectedSlaves/$expectedSlaves\nWorkers: $connectedWorkers/$expectedWorkers")
   }
 
   def addWorker(worker: ActorRef): Unit = workerPool += worker

@@ -14,7 +14,6 @@ trait PasswordCracking {
     (start to end)
       .flatMap(password => {
         val hash = hashPassword(password)
-        println(password, " hash", hash)
         hashesAndIds
           .get(hash)
           .map(userId => {

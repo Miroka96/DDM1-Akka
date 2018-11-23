@@ -2,7 +2,7 @@ package skynet.cluster.actors
 
 import akka.actor.Props
 import akka.cluster.ClusterEvent
-import skynet.cluster.actors.Messages.{PasswordCrackingMessage, PasswordCrackingResult}
+import skynet.cluster.actors.Messages.{ExerciseJobData, PasswordCrackingMessage, PasswordCrackingResult}
 import skynet.cluster.actors.WorkManager.CSVPerson
 import skynet.cluster.actors.tasks.PasswordCracking
 import skynet.cluster.actors.util.{ErrorHandling, RegistrationHandling}
@@ -11,9 +11,13 @@ import scala.concurrent.Future
 
 object Messages {
 
+  abstract class JobData()
   abstract class JobMessage()
 
   abstract class JobResult(var originalJob: JobMessage)
+
+  case class ExerciseJobData(data: Array[CSVPerson]) extends JobData
+
   case class PasswordCrackingMessage(from: Int, to: Int) extends JobMessage
 
   case class PasswordCrackingResult(job: PasswordCrackingMessage, result: Map[Int, String]) extends JobResult(job)
@@ -36,17 +40,26 @@ class Worker extends AbstractWorker with RegistrationHandling with PasswordCrack
   import context.dispatcher
 
   var dataSet: Array[CSVPerson] = _
+  var waitingWork: PasswordCrackingMessage = _
 
   // Actor Behavior //
   override def receive: Receive = {
     case m: ClusterEvent.CurrentClusterState => handleClusterState(m)
     case m: ClusterEvent.MemberUp => handleMemberUp(m)
     case m: PasswordCrackingMessage => handlePasswordCrackingMessage(m)
-    case m: Array[CSVPerson] => dataSet = m
+    case m: ExerciseJobData => {
+      dataSet = m.data
+      if (waitingWork != null) {
+        val work = waitingWork
+        waitingWork = null
+        handlePasswordCrackingMessage(waitingWork)
+      }
+    }
     case m => messageNotUnderstood(m)
   }
 
   private def handlePasswordCrackingMessage(m: PasswordCrackingMessage): Unit = {
+    if (dataSet == null) return
     Future({
       val hashesAndIds = dataSet.map(person => (person.passwordhash, person.id)).toMap
       val result = crack(hashesAndIds, m.from, m.to)

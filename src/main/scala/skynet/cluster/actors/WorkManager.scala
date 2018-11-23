@@ -3,7 +3,7 @@ package skynet.cluster.actors
 import akka.actor.{Actor, ActorSelection, Props, Terminated}
 import akka.cluster.Member
 import skynet.cluster.SkynetMaster
-import skynet.cluster.actors.Messages.PasswordCrackingResult
+import skynet.cluster.actors.Messages.{ExerciseJobData, PasswordCrackingResult}
 import skynet.cluster.actors.WorkManager._
 import skynet.cluster.actors.jobs.PasswordJob
 import skynet.cluster.actors.util.ErrorHandling
@@ -34,14 +34,16 @@ object WorkManager {
 }
 
 
-class WorkManager(localWorkerCount: Int, slaveNodeCount: Int, dataSet: Array[CSVPerson]) extends Actor with ErrorHandling {
+class WorkManager(val localWorkerCount: Int,
+                  val slaveNodeCount: Int,
+                  val dataSet: Array[CSVPerson])
+  extends Actor with ErrorHandling {
 
 
   /////////////////
   // Actor State //
   /////////////////
-  //final private val unassignedWork = new java.util.LinkedList[WorkMessage]
-  //final private val busyWorkers = new java.util.HashMap[ActorRef, WorkMessage]
+
   private val workerPool = new WorkerPool(slaveNodeCount, localWorkerCount)
 
   // Actor Behavior //
@@ -55,30 +57,27 @@ class WorkManager(localWorkerCount: Int, slaveNodeCount: Int, dataSet: Array[CSV
 
   private def handleRegistration(): Unit = {
     context.watch(sender)
-    /*idleWorkers.append(sender)
 
-    if (idleWorkers.size >= expectedWorkers.values.sum) {
-     for (worker <- idleWorkers) {
-        assignWorker(worker)
-      }
-    }*/
-    // this might be a bit raceconditiony
-    sender().tell(dataSet, self)
+    sender().tell(ExerciseJobData(dataSet), self)
+
     workerPool.workerConnected(sender())
-    if (workerPool.isReadyToStart) startWork()
     log.info("Registered {}", sender)
+
+    if (workerPool.isReadyToStart) {
+      startWork()
+    }
   }
 
   def handleWelcome(m: SystemWelcomeMessage): Unit = {
     workerPool.slaveConnected(m.workerCount)
     if (workerPool.isReadyToStart) startWork()
-    println("local w count ", localWorkerCount, "slave c", slaveNodeCount, "csv ", dataSet, m)
+    println(s"local w count $localWorkerCount slave c $slaveNodeCount csv $dataSet $m")
   }
 
   private def startWork(): Unit = {
     val jobMessages = PasswordJob.splitBetween(workerPool.numberOfIdleWorkers)
-    println("jetzt gehts looos")
-    for ((worker, message) <- workerPool zip jobMessages) {
+    println("starting work ")
+    for ((worker, message) <- workerPool.workerPool zip jobMessages) {
       println(message)
       worker.tell(message, self)
     }
@@ -86,8 +85,7 @@ class WorkManager(localWorkerCount: Int, slaveNodeCount: Int, dataSet: Array[CSV
   }
 
   private def handlePasswordCrackingResult(m: PasswordCrackingResult): Unit = {
-    println("got it")
-    println(m)
+    println("got $m")
   }
 
   private def handleTermination(message: Terminated): Unit = {
