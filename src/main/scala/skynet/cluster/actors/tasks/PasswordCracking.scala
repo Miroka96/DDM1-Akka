@@ -3,13 +3,11 @@ package skynet.cluster.actors.tasks
 import java.io.UnsupportedEncodingException
 import java.security.{MessageDigest, NoSuchAlgorithmException}
 
-trait PasswordCracking {
+import skynet.cluster.actors.Logging
 
-
+trait PasswordCracking extends Logging {
   def crack(hashesAndIds: Map[String, Int], start: Int, end: Int): Map[Int, Int] = {
-    // This should be wrapped in  a future but I am not sure if we need a special dispatcher and how we send back results
-
-    println("start cracking")
+    log.info("start cracking")
 
     (start to end)
       .flatMap(password => {
@@ -17,14 +15,10 @@ trait PasswordCracking {
         hashesAndIds
           .get(hash)
           .map(userId => {
-            println(s"found $hash for $password for $userId")
+            log.info(s"found $hash for $password for $userId")
             (userId, password)
           })
       }).toMap
-  }
-
-  def test(): Unit = {
-    println("hola")
   }
 
   private def hashPassword(password: Int): String = try {
