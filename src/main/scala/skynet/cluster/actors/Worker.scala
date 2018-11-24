@@ -60,7 +60,10 @@ class Worker extends AbstractWorker with RegistrationHandling with PasswordCrack
   }
 
   private def handlePasswordCrackingMessage(m: PasswordCrackingMessage): Unit = {
-    if (dataSet == null) return
+    if (dataSet == null) {
+      waitingWork = m
+      return
+    }
     Future({
       val hashesAndIds = dataSet.map(person => (person.passwordhash, person.id)).toMap
       val result = crack(hashesAndIds, m.from, m.to)
