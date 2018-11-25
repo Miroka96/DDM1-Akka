@@ -25,14 +25,15 @@ object PasswordJob extends Job {
 
 object LinearCombinationJob{
   def splitIntoNMessages(nrOfWorkers: Int, idToPassword: Map[Int,Int]): Seq[LinearCombinationMessage] = {
-    var highest = Math.pow(2,idToPassword.keys.size).toLong
-    val stepSize = (highest / nrOfWorkers).ceil.toLong
+    val highest = Math.pow(2,idToPassword.keys.size).toLong
+    var current = 0L
+    val stepSize = 10000000
     val messages = new ArrayBuffer[LinearCombinationMessage](nrOfWorkers)
-    while(highest > stepSize){
-      messages.append(LinearCombinationMessage(idToPassword, highest - stepSize, highest))
-      highest -= stepSize
+    while(current < highest - stepSize){
+      messages.append(LinearCombinationMessage(idToPassword, current, current + stepSize))
+      current += stepSize
     }
-    messages.append(LinearCombinationMessage(idToPassword, 0, highest))
+    messages.append(LinearCombinationMessage(idToPassword, current, highest))
     messages
 
   }
