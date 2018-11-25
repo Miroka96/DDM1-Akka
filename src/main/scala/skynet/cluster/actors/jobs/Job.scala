@@ -27,7 +27,7 @@ object LinearCombinationJob{
   def splitIntoNMessages(nrOfWorkers: Int, idToPassword: Map[Int,Int]): Seq[LinearCombinationMessage] = {
     val highest = Math.pow(2,idToPassword.keys.size).toLong
     var current = 0L
-    val stepSize = 10000000
+    val stepSize = 100000000
     val messages = new ArrayBuffer[LinearCombinationMessage](nrOfWorkers)
     while(current < highest - stepSize){
       messages.append(LinearCombinationMessage(idToPassword, current, current + stepSize))
