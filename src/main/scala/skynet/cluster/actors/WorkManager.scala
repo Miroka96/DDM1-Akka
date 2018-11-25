@@ -5,7 +5,7 @@ import akka.cluster.Member
 import skynet.cluster.SkynetMaster
 import skynet.cluster.actors.Messages._
 import skynet.cluster.actors.WorkManager._
-import skynet.cluster.actors.jobs.PasswordJob
+import skynet.cluster.actors.jobs.{LinearCombinationJob, PasswordJob}
 import skynet.cluster.actors.util.ErrorHandling
 import skynet.cluster.util.WorkerPool
 
@@ -58,12 +58,14 @@ class WorkManager(val localWorkerCount: Int,
   private val exerciseResult = dataSet.map(person => (person.id, CrackedPerson(person))).toMap
   private var passwordCrackingFinished = false
 
+
   // Actor Behavior //
   override def receive: Receive = {
     case _: RegistrationMessage => handleRegistration()
     case m: SystemWelcomeMessage => handleWelcome(m)
     case m: Terminated => handleTermination(m)
     case m: PasswordCrackingResult => handlePasswordCrackingResult(m)
+    case m: LinearCombinationResult => handleLinearCombinationResult(m)
     case m => messageNotUnderstood(m)
   }
 
@@ -75,16 +77,16 @@ class WorkManager(val localWorkerCount: Int,
     workerPool.workerConnected(sender())
 
     if (workerPool.isReadyToStart) {
-      startWork()
+      startPasswordWork()
     }
   }
 
   def handleWelcome(m: SystemWelcomeMessage): Unit = {
     workerPool.slaveConnected(m.workerCount)
-    if (workerPool.isReadyToStart) startWork()
+    if (workerPool.isReadyToStart) startPasswordWork()
   }
 
-  private def startWork(): Unit = {
+  private def startPasswordWork(): Unit = {
     log.info("starting work ")
     val jobMessages = PasswordJob.splitIntoNMessages(workerPool.numberOfIdleWorkers * 3)
     jobMessages.foreach(unassignedWork.enqueue(_))
@@ -123,9 +125,23 @@ class WorkManager(val localWorkerCount: Int,
         .sortBy { case (id, _) => id }
 
       val passwordList = resultList.map(_._2.password).toArray
-      distributeData(PasswordData(passwordList))
       resultList.foreach { case (id, person) => log.info(s"$id: ${person.password}") }
+
+      startLinearCombination()
     }
+  }
+
+  def handleLinearCombinationResult(m: LinearCombinationResult): Unit = {
+    println(m)
+    assignAvailableWork()
+  }
+
+
+  private def startLinearCombination(): Unit ={
+    val idToPassword = exerciseResult.mapValues(w => w.password)
+    val messages = LinearCombinationJob.splitIntoNMessages(workerPool.numberOfIdleWorkers * 3, idToPassword)
+    messages.foreach(unassignedWork.enqueue(_))
+    assignAvailableWork()
   }
 
   private def distributeData(data: JobData): Unit = {

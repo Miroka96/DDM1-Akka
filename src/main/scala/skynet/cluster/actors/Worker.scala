@@ -2,9 +2,9 @@ package skynet.cluster.actors
 
 import akka.actor.Props
 import akka.cluster.ClusterEvent
-import skynet.cluster.actors.Messages.{ExerciseJobData, PasswordCrackingMessage, PasswordCrackingResult}
+import skynet.cluster.actors.Messages._
 import skynet.cluster.actors.WorkManager.CSVPerson
-import skynet.cluster.actors.tasks.PasswordCracking
+import skynet.cluster.actors.tasks.{LinearCombination, PasswordCracking}
 import skynet.cluster.actors.util.{ErrorHandling, RegistrationHandling}
 
 import scala.concurrent.Future
@@ -21,7 +21,8 @@ object Messages {
   case class PasswordCrackingMessage(from: Int, to: Int) extends JobMessage
   case class PasswordCrackingResult(job: PasswordCrackingMessage, result: Map[Int, Int]) extends JobResult(job)
 
-  case class PasswordData(passwords: Array[Int]) extends JobData
+  case class LinearCombinationMessage(idToPassword: Map[Int,Int], from: Long, to: Long) extends JobMessage
+  case class LinearCombinationResult(job: LinearCombinationMessage, idToPrefix: Map[Int,Int], success: Boolean) extends JobResult(job)
 
 }
 
@@ -35,7 +36,7 @@ object Worker {
 
 }
 
-class Worker extends AbstractWorker with RegistrationHandling with PasswordCracking with ErrorHandling {
+class Worker extends AbstractWorker with RegistrationHandling with PasswordCracking with LinearCombination with ErrorHandling {
 
   import akka.pattern.pipe
   import context.dispatcher
@@ -43,11 +44,13 @@ class Worker extends AbstractWorker with RegistrationHandling with PasswordCrack
   var dataSet: Array[CSVPerson] = _
   var waitingWork: PasswordCrackingMessage = _
 
+
   // Actor Behavior //
   override def receive: Receive = {
     case m: ClusterEvent.CurrentClusterState => handleClusterState(m)
     case m: ClusterEvent.MemberUp => handleMemberUp(m)
     case m: PasswordCrackingMessage => handlePasswordCrackingMessage(m)
+    case m: LinearCombinationMessage => handleLinearCombination(m)
     case m: ExerciseJobData => {
       dataSet = m.data
       if (waitingWork != null) {
@@ -68,6 +71,15 @@ class Worker extends AbstractWorker with RegistrationHandling with PasswordCrack
       val hashesAndIds = dataSet.map(person => (person.passwordhash, person.id)).toMap
       val result = crack(hashesAndIds, m.from, m.to)
       PasswordCrackingResult(m, result)
+    }).pipeTo(sender)
+  }
+
+  def handleLinearCombination(m: LinearCombinationMessage): Unit = {
+    println("got linear job")
+    Future({
+      val result = this.solveLinearCombination(m.idToPassword, m.from, m.to)
+      val success = if(result == null) false else true
+      LinearCombinationResult(m, result, success)
     }).pipeTo(sender)
   }
 
