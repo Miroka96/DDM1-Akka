@@ -27,6 +27,10 @@ object Messages {
   case class SubSequenceMessage(id: Int) extends JobMessage
   case class SubSequenceResult(job: SubSequenceMessage, id: Int, partnerId: Int) extends JobResult(job)
 
+  case class HashMiningMessage() extends JobMessage
+
+  case class HashMiningResult(job: HashMiningMessage) extends JobResult(job)
+
 }
 
 object Worker {

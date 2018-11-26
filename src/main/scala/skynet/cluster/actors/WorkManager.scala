@@ -119,7 +119,7 @@ class WorkManager(val localWorkerCount: Int,
 
     assignAvailableWork()
 
-    if (!exerciseResult.exists { case (_, person) => person.password.equals(-1) }) {
+    if (!passwordCrackingFinished && !exerciseResult.exists { case (_, person) => person.password.equals(-1) }) {
       passwordCrackingFinished = true
       log.info("Passwords cracked")
       val resultList = exerciseResult
@@ -129,9 +129,11 @@ class WorkManager(val localWorkerCount: Int,
       val passwordList = resultList.map(_._2.password).toArray
       resultList.foreach { case (id, person) => log.info(s"$id: ${person.password}") }
 
+      // TODO maybe this will be started twice
       startLinearCombination()
     }
   }
+
 
   def handleLinearCombinationResult(m: LinearCombinationResult): Unit = {
     println("got linear combo result")
@@ -141,6 +143,7 @@ class WorkManager(val localWorkerCount: Int,
     }
     workerPool.freeWorker(sender())
     assignAvailableWork()
+    // TODO maybe already start the next task (hash mining) depending on finishing status
   }
 
   def handleSubsequenceResult(m: SubSequenceResult): Unit = {
@@ -151,13 +154,16 @@ class WorkManager(val localWorkerCount: Int,
     if(unassignedWork.isEmpty){
       println(exerciseResult.mapValues(_.partner))
     }
+    // TODO maybe already start the next task (hash mining) depending on finishing status
   }
 
 
   private def startLinearCombination(): Unit ={
     val idToPassword = exerciseResult.mapValues(w => w.password)
+    // return a single message
     val messages = LinearCombinationJob.splitIntoNMessages(workerPool.numberOfIdleWorkers * 3, idToPassword)
-    messages.foreach(unassignedWork.enqueue(_))
+    unassignedWork ++= messages
+    // messages.foreach(unassignedWork.enqueue(_))
     assignAvailableWork()
     startSubSequenceMatching()
   }
@@ -181,41 +187,6 @@ class WorkManager(val localWorkerCount: Int,
     }*/
     log.info("Unregistered {}", message.getActor)
   }
-
-  /*  private def assignWork(work: WorkMessage): Unit = {
-    val worker = idleWorkers.remove(0)
-    if (worker == null) {
-      unassignedWork.add(work)
-      return
-    }
-    busyWorkers.put(worker, work)
-    worker.tell(work, self)
-  }
-
-  private def handleTaskResult(message: ResultMessage): Unit = {
-    val worker = sender
-    val work = busyWorkers.remove(worker)
-    log.info("Completed: {}", work)
-
-    assignWorker(worker)
-  }
-
-  private def assignWorker(worker: ActorRef): Unit = {
-    val work = unassignedWork.poll()
-    if (work == null) {
-      idleWorkers += worker
-      return
-    }
-
-    busyWorkers.put(worker, work)
-    worker.tell(work, self)
-  }
-
-  private def reportWorkResults(work: WorkMessage): Unit = {
-    log.info("UCC: {}", work)
-  }
-
-*/
 }
 
 trait RegistrationProcess extends Actor {

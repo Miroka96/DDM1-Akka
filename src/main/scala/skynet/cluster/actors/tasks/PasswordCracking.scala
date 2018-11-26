@@ -21,7 +21,7 @@ trait PasswordCracking extends Logging {
       }).toMap
   }
 
-  private def hashPassword(password: Int): String = try {
+  def hashPassword(password: Int): String = try {
     val digest = MessageDigest.getInstance("SHA-256")
     val hashedBytes = digest.digest(
       String
