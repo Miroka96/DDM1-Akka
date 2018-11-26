@@ -45,7 +45,7 @@ object WorkManager {
 class WorkManager(val localWorkerCount: Int,
                   val slaveNodeCount: Int,
                   val dataSet: Array[CSVPerson])
-  extends Actor with ErrorHandling {
+  extends AbstractWorker with ErrorHandling {
 
 
   /////////////////

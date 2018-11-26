@@ -8,7 +8,10 @@ import java.util.Random
 trait HashMining {
 
   /**
-    * Why this is correct:
+    * Why this is correct: For all numbers i smaller than the larges partner number lp, the nonce would simply be
+    * i_nonce = lp - i +lp_nonce
+    * Thus all the hashes are correct and there are only two necessary hashes, one for 00000 and one for 11111
+    * as all nonces can be computed from the one master nonce lp_nonce
     * @param maxPartnerId
     * @param start
     * @param end

@@ -23,6 +23,7 @@ object SkynetSlave extends SkynetSystem {
       spawnBackbone(system, workerCount)
     })
 
+
     for (seednode <- Cluster.get(system).settings.SeedNodes) {
       println(seednode)
       system.actorSelection(seednode + "/user/" + WorkManager.DEFAULT_NAME)

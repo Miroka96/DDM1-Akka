@@ -43,7 +43,7 @@ abstract class SkynetSystem {
     // Register a callback that terminates the ActorSystem when it is detached from the cluster
     Cluster.get(system).registerOnMemberRemoved(() => {
       system.terminate
-      new Thread() {
+      /*new Thread() {
         override def run(): Unit = {
           try
             Await.ready(system.whenTerminated, Duration.create(10, TimeUnit.SECONDS))
@@ -52,7 +52,7 @@ abstract class SkynetSystem {
               System.exit(-1)
           }
         }
-      }.start()
+      }.start()*/
     }
     )
     system
