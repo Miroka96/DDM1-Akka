@@ -1,6 +1,6 @@
 package skynet.cluster.actors.jobs
 
-import skynet.cluster.actors.Messages.{JobMessage, LinearCombinationMessage, PasswordCrackingMessage}
+import skynet.cluster.actors.Messages.{JobMessage, LinearCombinationMessage, PasswordCrackingMessage, SubSequenceMessage}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -26,5 +26,13 @@ object PasswordJob extends Job {
 object LinearCombinationJob{
   def splitIntoNMessages(nrOfWorkers: Int, idToPassword: Map[Int,Int]): Seq[LinearCombinationMessage] = {
     Seq(LinearCombinationMessage(idToPassword))
+  }
+}
+
+
+object SubSequenceJob{
+  def splitIntoNMessages(nrOfWorkers: Int, numberOfPersons: Int): Seq[SubSequenceMessage] ={
+    println(s"number of persons $numberOfPersons")
+    (1 to numberOfPersons).map(SubSequenceMessage)
   }
 }

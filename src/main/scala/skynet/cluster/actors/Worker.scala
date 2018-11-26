@@ -4,7 +4,7 @@ import akka.actor.Props
 import akka.cluster.ClusterEvent
 import skynet.cluster.actors.Messages._
 import skynet.cluster.actors.WorkManager.CSVPerson
-import skynet.cluster.actors.tasks.{DPLinearCombination, LinearCombination, PasswordCracking}
+import skynet.cluster.actors.tasks.{DPLinearCombination, GeneMatching, LinearCombination, PasswordCracking}
 import skynet.cluster.actors.util.{ErrorHandling, RegistrationHandling}
 
 import scala.concurrent.Future
@@ -24,6 +24,9 @@ object Messages {
   case class LinearCombinationMessage(idToPassword: Map[Int,Int]) extends JobMessage
   case class LinearCombinationResult(job: LinearCombinationMessage, idToPrefix: Map[Int,Int]) extends JobResult(job)
 
+  case class SubSequenceMessage(id: Int) extends JobMessage
+  case class SubSequenceResult(job: SubSequenceMessage, id: Int, partnerId: Int) extends JobResult(job)
+
 }
 
 object Worker {
@@ -36,7 +39,8 @@ object Worker {
 
 }
 
-class Worker extends AbstractWorker with RegistrationHandling with PasswordCracking with DPLinearCombination with ErrorHandling {
+class Worker extends AbstractWorker with RegistrationHandling with PasswordCracking with DPLinearCombination
+  with GeneMatching with ErrorHandling {
 
   import akka.pattern.pipe
   import context.dispatcher
@@ -45,12 +49,14 @@ class Worker extends AbstractWorker with RegistrationHandling with PasswordCrack
   var waitingWork: PasswordCrackingMessage = _
 
 
+
   // Actor Behavior //
   override def receive: Receive = {
     case m: ClusterEvent.CurrentClusterState => handleClusterState(m)
     case m: ClusterEvent.MemberUp => handleMemberUp(m)
     case m: PasswordCrackingMessage => handlePasswordCrackingMessage(m)
     case m: LinearCombinationMessage => handleLinearCombination(m)
+    case m: SubSequenceMessage => handleSubSequence(m)
     case m: ExerciseJobData => {
       dataSet = m.data
       if (waitingWork != null) {
@@ -61,6 +67,16 @@ class Worker extends AbstractWorker with RegistrationHandling with PasswordCrack
     }
     case m => messageNotUnderstood(m)
   }
+
+  def handleSubSequence(m: SubSequenceMessage): Unit = {
+    println("got subsequence job")
+    Future({
+      val gene = dataSet.find(_.id==m.id).get.gene
+      val longest: Int = findPartner(dataSet, m.id, gene)
+      SubSequenceResult(m, m.id, longest)
+    }).pipeTo(sender())
+  }
+
 
   private def handlePasswordCrackingMessage(m: PasswordCrackingMessage): Unit = {
     if (dataSet == null) {

@@ -5,7 +5,7 @@ import akka.cluster.Member
 import skynet.cluster.SkynetMaster
 import skynet.cluster.actors.Messages._
 import skynet.cluster.actors.WorkManager._
-import skynet.cluster.actors.jobs.{LinearCombinationJob, PasswordJob}
+import skynet.cluster.actors.jobs.{LinearCombinationJob, PasswordJob, SubSequenceJob}
 import skynet.cluster.actors.util.ErrorHandling
 import skynet.cluster.util.WorkerPool
 
@@ -59,6 +59,7 @@ class WorkManager(val localWorkerCount: Int,
   private var passwordCrackingFinished = false
 
 
+
   // Actor Behavior //
   override def receive: Receive = {
     case _: RegistrationMessage => handleRegistration()
@@ -66,6 +67,7 @@ class WorkManager(val localWorkerCount: Int,
     case m: Terminated => handleTermination(m)
     case m: PasswordCrackingResult => handlePasswordCrackingResult(m)
     case m: LinearCombinationResult => handleLinearCombinationResult(m)
+    case m: SubSequenceResult => handleSubsequenceResult(m)
     case m => messageNotUnderstood(m)
   }
 
@@ -132,15 +134,23 @@ class WorkManager(val localWorkerCount: Int,
   }
 
   def handleLinearCombinationResult(m: LinearCombinationResult): Unit = {
-    println(exerciseResult)
-    println(m)
+    println("got linear combo result")
     val idToPrefix = m.idToPrefix
     for((key,value) <- idToPrefix){
       exerciseResult(key).prefix = value
     }
-    println(exerciseResult)
     workerPool.freeWorker(sender())
     assignAvailableWork()
+  }
+
+  def handleSubsequenceResult(m: SubSequenceResult): Unit = {
+    println(s"got subsequens res $m")
+    exerciseResult(m.id).partner = m.partnerId
+    workerPool.freeWorker(sender())
+    assignAvailableWork()
+    if(unassignedWork.isEmpty){
+      println(exerciseResult)
+    }
   }
 
 
@@ -149,11 +159,16 @@ class WorkManager(val localWorkerCount: Int,
     val messages = LinearCombinationJob.splitIntoNMessages(workerPool.numberOfIdleWorkers * 3, idToPassword)
     messages.foreach(unassignedWork.enqueue(_))
     assignAvailableWork()
+    startSubSequenceMatching()
   }
 
-  private def distributeData(data: JobData): Unit = {
-    workerPool().foreach(_.tell(data, self))
+  private def startSubSequenceMatching(): Unit = {
+    SubSequenceJob.splitIntoNMessages(workerPool.numberOfIdleWorkers, exerciseResult.keys.size).foreach(
+      unassignedWork.enqueue(_)
+    )
+    assignAvailableWork()
   }
+
 
   private def handleTermination(message: Terminated): Unit = {
     context.unwatch(message.getActor)
