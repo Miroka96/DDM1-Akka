@@ -4,7 +4,7 @@ import akka.actor.Props
 import akka.cluster.ClusterEvent
 import skynet.cluster.actors.Messages._
 import skynet.cluster.actors.WorkManager.CSVPerson
-import skynet.cluster.actors.tasks.{DPLinearCombination, GeneMatching, LinearCombination, PasswordCracking}
+import skynet.cluster.actors.tasks.{DPLinearCombination, GeneMatching, PasswordCracking}
 import skynet.cluster.actors.util.{ErrorHandling, RegistrationHandling}
 
 import scala.concurrent.Future
