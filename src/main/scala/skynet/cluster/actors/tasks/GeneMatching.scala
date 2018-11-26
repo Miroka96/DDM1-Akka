@@ -173,22 +173,19 @@ trait GeneMatching {
             longestSubstringStart = str1Index - (newLength - 1)
           }
         }
-        else newLength = 0
+        else {newLength = 0}
         currentRow(str1Index) = newLength
 
-        {
-          str1Index += 1
-          str1Index - 1
-        }
+        str1Index += 1
+
       }
       val temp = currentRow
       currentRow = lastRow
       lastRow = temp
 
-      {
-        str2Index += 1
-        str2Index += 1
-      }
+
+      str2Index += 1
+
 
 
     }

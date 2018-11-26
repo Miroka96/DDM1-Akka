@@ -149,7 +149,7 @@ class WorkManager(val localWorkerCount: Int,
     workerPool.freeWorker(sender())
     assignAvailableWork()
     if(unassignedWork.isEmpty){
-      println(exerciseResult)
+      println(exerciseResult.mapValues(_.partner))
     }
   }
 
