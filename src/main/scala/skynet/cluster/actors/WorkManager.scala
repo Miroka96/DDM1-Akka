@@ -1,11 +1,11 @@
 package skynet.cluster.actors
 
-import akka.actor.{Actor, ActorRef, ActorSelection, Props, Terminated}
+import akka.actor.{Actor, ActorRef, ActorSelection, PoisonPill, Props, Terminated}
 import akka.cluster.Member
 import skynet.cluster.SkynetMaster
 import skynet.cluster.actors.Messages._
 import skynet.cluster.actors.WorkManager._
-import skynet.cluster.actors.jobs.{LinearCombinationJob, PasswordJob, SubSequenceJob}
+import skynet.cluster.actors.jobs.{HashMiningJob, LinearCombinationJob, PasswordJob, SubSequenceJob}
 import skynet.cluster.actors.util.ErrorHandling
 import skynet.cluster.util.WorkerPool
 
@@ -57,7 +57,9 @@ class WorkManager(val localWorkerCount: Int,
 
   private val exerciseResult = dataSet.map(person => (person.id, CrackedPerson(person))).toMap
   private var passwordCrackingFinished = false
-
+  private var got0Nonce = false
+  private var got1Nonce = false
+  private var hashMiningStarted = false
 
 
   // Actor Behavior //
@@ -68,6 +70,7 @@ class WorkManager(val localWorkerCount: Int,
     case m: PasswordCrackingResult => handlePasswordCrackingResult(m)
     case m: LinearCombinationResult => handleLinearCombinationResult(m)
     case m: SubSequenceResult => handleSubsequenceResult(m)
+    case m: HashMiningResult => handleHashMiningResult(m)
     case m => messageNotUnderstood(m)
   }
 
@@ -138,41 +141,63 @@ class WorkManager(val localWorkerCount: Int,
   def handleLinearCombinationResult(m: LinearCombinationResult): Unit = {
     println("got linear combo result")
     val idToPrefix = m.idToPrefix
-    for((key,value) <- idToPrefix){
+    for ((key, value) <- idToPrefix) {
       exerciseResult(key).prefix = value
     }
     workerPool.freeWorker(sender())
     assignAvailableWork()
-    // TODO maybe already start the next task (hash mining) depending on finishing status
+    if (!exerciseResult.exists { case (_, person) => person.partner == -1 || person.prefix == 0 }) {
+      startHashMining()
+    }
   }
+
 
   def handleSubsequenceResult(m: SubSequenceResult): Unit = {
     println(s"got subsequens res $m")
     exerciseResult(m.id).partner = m.partnerId
     workerPool.freeWorker(sender())
     assignAvailableWork()
-    if(unassignedWork.isEmpty){
+    if (!exerciseResult.exists { case (_, person) => person.partner == -1 || person.prefix == 0 }) {
       println(exerciseResult.mapValues(_.partner))
+      startHashMining()
     }
-    // TODO maybe already start the next task (hash mining) depending on finishing status
   }
 
+  def handleHashMiningResult(m: HashMiningResult): Unit = {
+    if (m.success && !(got0Nonce && got1Nonce)) {
+      if (m.prefix == -1 ) got0Nonce = true else got1Nonce = true
+      exerciseResult.foreach { case (id, cracked) => if (m.prefix == cracked.prefix) cracked.hash = m.hash }
+      println("got hash result ", m.hash)
+    } else if (!(got0Nonce && got1Nonce) && !m.success) {
+      unassignedWork.enqueue(HashMiningJob.giveNextMessage(m.job))
+    } else {
+      println("finished ", exerciseResult)
+      workerPool.workerPool.foreach(worker => worker ! PoisonPill)
+    }
+    workerPool.freeWorker(sender())
+    assignAvailableWork()
+  }
 
-  private def startLinearCombination(): Unit ={
+  private def startLinearCombination(): Unit = {
     val idToPassword = exerciseResult.mapValues(w => w.password)
-    // return a single message
-    val messages = LinearCombinationJob.splitIntoNMessages(workerPool.numberOfIdleWorkers * 3, idToPassword)
-    unassignedWork ++= messages
-    // messages.foreach(unassignedWork.enqueue(_))
+    unassignedWork ++= LinearCombinationJob.splitIntoNMessages(workerPool.numberOfIdleWorkers * 3, idToPassword)
+    print(unassignedWork)
     assignAvailableWork()
     startSubSequenceMatching()
   }
 
   private def startSubSequenceMatching(): Unit = {
-    SubSequenceJob.splitIntoNMessages(workerPool.numberOfIdleWorkers, exerciseResult.keys.size).foreach(
-      unassignedWork.enqueue(_)
-    )
+    unassignedWork ++= SubSequenceJob.splitIntoNMessages(workerPool.numberOfIdleWorkers, exerciseResult.keys.size)
+    print(unassignedWork)
     assignAvailableWork()
+  }
+
+  def startHashMining(): Unit = {
+    if(hashMiningStarted){assignAvailableWork()}
+    else{
+      hashMiningStarted = true
+      unassignedWork ++= HashMiningJob.splitIntoNMessages(exerciseResult.keys.size, workerPool.numberOfIdleWorkers)
+      assignAvailableWork()}
   }
 
 

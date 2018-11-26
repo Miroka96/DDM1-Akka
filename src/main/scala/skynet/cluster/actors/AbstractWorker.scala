@@ -14,5 +14,8 @@ abstract class AbstractWorker extends Actor with Logging {
 
   override def preStart(): Unit = cluster.subscribe(self, classOf[ClusterEvent.MemberUp])
 
-  override def postStop(): Unit = cluster.unsubscribe(self)
+  override def postStop(): Unit = {
+    println("going down")
+    cluster.unsubscribe(self)
+  }
 }

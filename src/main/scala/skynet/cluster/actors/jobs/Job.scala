@@ -1,6 +1,7 @@
 package skynet.cluster.actors.jobs
 
-import skynet.cluster.actors.Messages.{LinearCombinationMessage, PasswordCrackingMessage, SubSequenceMessage}
+import skynet.cluster.actors.Messages.{HashMiningMessage, LinearCombinationMessage, PasswordCrackingMessage, SubSequenceMessage}
+import skynet.cluster.actors.WorkManager.{CSVPerson, CrackedPerson}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -36,7 +37,17 @@ object SubSequenceJob {
 }
 
 object HashMiningJob {
-  def splitIntoNMessages(nrOfPersons: Int): Unit = {
+  val stepSize = 1000000
+  var currentLower = 0
 
+  def splitIntoNMessages(maxPartnerNr:Int,nrOfWorkers:Int) : Seq[HashMiningMessage] = {
+    currentLower = stepSize*nrOfWorkers
+    (0 until nrOfWorkers).map(i=>HashMiningMessage(maxPartnerNr,i*stepSize,(i+1)*stepSize))
+  }
+
+  def giveNextMessage(oldMessage: HashMiningMessage) : HashMiningMessage = {
+    val message = oldMessage.copy(from = currentLower + stepSize, to= currentLower+stepSize)
+    currentLower += stepSize
+    message
   }
 }

@@ -53,7 +53,8 @@ abstract class SkynetSystem {
           }
         }
       }.start()
-    })
+    }
+    )
     system
   }
 

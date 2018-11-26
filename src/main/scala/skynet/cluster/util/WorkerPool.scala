@@ -8,7 +8,7 @@ import scala.collection.mutable
 
 class WorkerPool(private var slaveCount: Int, localWorkers: Int) {
 
-  private val workerPool: mutable.Set[ActorRef] = mutable.Set[ActorRef]()
+  val workerPool: mutable.Set[ActorRef] = mutable.Set[ActorRef]()
 
   private val idle: mutable.Set[ActorRef] = mutable.LinkedHashSet[ActorRef]()
 
@@ -17,6 +17,7 @@ class WorkerPool(private var slaveCount: Int, localWorkers: Int) {
   private var connectedSlaves = 0
   private var expectedWorkers = localWorkers
   private var connectedWorkers = 0
+
 
   def workerConnected(worker: ActorRef): Unit = {
     connectedWorkers += 1
