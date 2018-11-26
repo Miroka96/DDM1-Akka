@@ -61,6 +61,7 @@ class WorkManager(val localWorkerCount: Int,
   private var got1Nonce = false
   private var hashMiningStarted = false
   private var startTime:Long = 0L
+  private var finished = false
 
 
   // Actor Behavior //
@@ -156,7 +157,8 @@ class WorkManager(val localWorkerCount: Int,
       exerciseResult.foreach { case (id, cracked) => if (m.prefix == cracked.prefix) cracked.hash = m.hash }
     } else if (!(got0Nonce && got1Nonce) && !m.success) {
       unassignedWork.enqueue(HashMiningJob.giveNextMessage(m.job))
-    } else {
+    } else if (!finished){
+      finished = true
       println("ID,Name,Password,Prefix,Partner,Hash")
       for(key <- exerciseResult.keys.toList.sorted){
         val person = exerciseResult(key)
