@@ -4,7 +4,7 @@ import akka.actor.Props
 import akka.cluster.ClusterEvent
 import skynet.cluster.actors.Messages._
 import skynet.cluster.actors.WorkManager.CSVPerson
-import skynet.cluster.actors.tasks.{LinearCombination, PasswordCracking}
+import skynet.cluster.actors.tasks.{DPLinearCombination, LinearCombination, PasswordCracking}
 import skynet.cluster.actors.util.{ErrorHandling, RegistrationHandling}
 
 import scala.concurrent.Future
@@ -21,8 +21,8 @@ object Messages {
   case class PasswordCrackingMessage(from: Int, to: Int) extends JobMessage
   case class PasswordCrackingResult(job: PasswordCrackingMessage, result: Map[Int, Int]) extends JobResult(job)
 
-  case class LinearCombinationMessage(idToPassword: Map[Int,Int], from: Long, to: Long) extends JobMessage
-  case class LinearCombinationResult(job: LinearCombinationMessage, idToPrefix: Map[Int,Int], success: Boolean) extends JobResult(job)
+  case class LinearCombinationMessage(idToPassword: Map[Int,Int]) extends JobMessage
+  case class LinearCombinationResult(job: LinearCombinationMessage, idToPrefix: Map[Int,Int]) extends JobResult(job)
 
 }
 
@@ -36,7 +36,7 @@ object Worker {
 
 }
 
-class Worker extends AbstractWorker with RegistrationHandling with PasswordCracking with LinearCombination with ErrorHandling {
+class Worker extends AbstractWorker with RegistrationHandling with PasswordCracking with DPLinearCombination with ErrorHandling {
 
   import akka.pattern.pipe
   import context.dispatcher
@@ -77,9 +77,8 @@ class Worker extends AbstractWorker with RegistrationHandling with PasswordCrack
   def handleLinearCombination(m: LinearCombinationMessage): Unit = {
     println("got linear job")
     Future({
-      val result = this.solveLinearCombination(m.idToPassword, m.from, m.to)
-      val success = if(result == null) false else true
-      LinearCombinationResult(m, result, success)
+      val result = this.solveLinearCombination(m.idToPassword)
+      LinearCombinationResult(m, result)
     }).pipeTo(sender)
   }
 

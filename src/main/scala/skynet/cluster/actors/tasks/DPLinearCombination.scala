@@ -1,18 +1,19 @@
 package skynet.cluster.actors.tasks
 
+import scala.annotation.tailrec
+import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
-object DPLinearCombination {
+trait DPLinearCombination {
 
-
-  def reconstructSubset(dp: Array[Array[Boolean]], passwords: Array[Int], i: Int, sum: Int, subset: ArrayBuffer[Int]): ArrayBuffer[Int] = {
+  private def reconstructSubset(dp: Array[Array[Boolean]], passwords: Array[Int], i: Int, sum: Int, subset: ArrayBuffer[Int]): ArrayBuffer[Int] = {
     //last element does the job
-    if(i==0 && sum != 0 && dp(0)(sum)){
+    if (i == 0 && sum != 0 && dp(0)(sum)) {
       subset.append(passwords(i))
       subset.foreach(println(_))
     }
     // done
-    else if(i == 0 && sum == 0){
+    else if (i == 0 && sum == 0) {
       subset.foreach(println(_))
     }
 
@@ -29,7 +30,7 @@ object DPLinearCombination {
     subset
   }
 
-  def getSubset(passwords: Array[Int]): Unit = {
+  def getSubset(passwords: Array[Int]): ArrayBuffer[Int] = {
     val sum = passwords.sum / 2
     var dp = Array.fill(passwords.length) {
       Array.ofDim[Boolean](sum + 1)
@@ -53,48 +54,21 @@ object DPLinearCombination {
     reconstructSubset(dp, passwords, passwords.length - 1, sum, subset)
   }
 
-  def main(args: Array[String]): Unit = {
-    getSubset(Array(240492,
-      221100,
-      800375,
-      183998,
-      131363,
-      355710,
-      354693,
-      163213,
-      412114,
-      737060,
-      955316,
-      388905,
-      319162,
-      548154,
-      268044,
-      131769,
-      984860,
-      336024,
-      196478,
-      139452,
-      115869,
-      411640,
-      269937,
-      904944,
-      407282,
-      602011,
-      554168,
-      324423,
-      557375,
-      950394,
-      279181,
-      721108,
-      567287,
-      248909,
-      808878,
-      781820,
-      659033,
-      945951,
-      880950,
-      147667,
-      327056,
-      536785))
+  def solveLinearCombination(idToPwd: Map[Int, Int]): Map[Int, Int] = {
+    println("Solving linear combination")
+    val passwords = Array.ofDim[Int](idToPwd.keys.size)
+    for (id <- idToPwd.keys) {
+      passwords(id - 1) = idToPwd(id)
+    }
+    val idToIndex = mutable.Map() ++ idToPwd.mapValues(_ => 1)
+    val subset = getSubset(passwords)
+    for(password <- subset){
+      var id = idToPwd.find(_._2==password).get._1
+      idToIndex(id) = -1
+    }
+    println(idToPwd)
+    println(idToIndex)
+    idToIndex.toMap
   }
+
 }

@@ -132,7 +132,13 @@ class WorkManager(val localWorkerCount: Int,
   }
 
   def handleLinearCombinationResult(m: LinearCombinationResult): Unit = {
+    println(exerciseResult)
     println(m)
+    val idToPrefix = m.idToPrefix
+    for((key,value) <- idToPrefix){
+      exerciseResult(key).prefix = value
+    }
+    println(exerciseResult)
     workerPool.freeWorker(sender())
     assignAvailableWork()
   }

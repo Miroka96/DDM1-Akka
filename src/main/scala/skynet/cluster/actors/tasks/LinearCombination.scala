@@ -39,3 +39,6 @@ trait LinearCombination {
     sum
   }
 }
+
+
+
