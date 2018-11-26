@@ -16,7 +16,8 @@ abstract class AbstractWorker extends Actor with Logging {
 
   override def postStop(): Unit = {
     println("going down")
-    cluster.unsubscribe(self)
-    context.system.terminate()
+    if(!cluster.isTerminated) {
+      cluster.unsubscribe(self)
+    }
   }
 }

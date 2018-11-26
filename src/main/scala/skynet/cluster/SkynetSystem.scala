@@ -34,14 +34,13 @@ abstract class SkynetSystem {
 
   protected def createSystem(actorSystemName: String, config: Config): ActorSystem = {
     val system = ActorSystem.create(actorSystemName, config)
-
     // Register a callback that ends the program when the ActorSystem terminates
     system.registerOnTermination(() => {
       System.exit(0)
     })
 
     // Register a callback that terminates the ActorSystem when it is detached from the cluster
-    Cluster.get(system).registerOnMemberRemoved(() => {
+   /* Cluster.get(system).registerOnMemberRemoved(() => {
       system.terminate
       /*new Thread() {
         override def run(): Unit = {
@@ -54,12 +53,12 @@ abstract class SkynetSystem {
         }
       }.start()*/
     }
-    )
+    )*/
     system
   }
 
   protected final def spawnBackbone(system: ActorSystem, workerCount: Int, slaveNodeCount: Int = 0, dataSet: Array[CSVPerson] = null): Unit = {
-    system.actorOf(ClusterListener.props, ClusterListener.DEFAULT_NAME)
+    //system.actorOf(ClusterListener.props, ClusterListener.DEFAULT_NAME)
     //system.actorOf(MetricsListener.props, MetricsListener.DEFAULT_NAME)
 
     spawnSpecialBackbone(system, workerCount, slaveNodeCount, dataSet)

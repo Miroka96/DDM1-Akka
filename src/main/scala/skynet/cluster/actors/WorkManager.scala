@@ -60,6 +60,7 @@ class WorkManager(val localWorkerCount: Int,
   private var got0Nonce = false
   private var got1Nonce = false
   private var hashMiningStarted = false
+  private var startTime:Long = 0L
 
 
   // Actor Behavior //
@@ -82,6 +83,7 @@ class WorkManager(val localWorkerCount: Int,
     workerPool.workerConnected(sender())
 
     if (workerPool.isReadyToStart) {
+      startTime = System.currentTimeMillis
       startPasswordWork()
     }
   }
@@ -92,7 +94,6 @@ class WorkManager(val localWorkerCount: Int,
   }
 
   private def startPasswordWork(): Unit = {
-    log.info("starting work ")
     val jobMessages = PasswordJob.splitIntoNMessages(workerPool.numberOfIdleWorkers * 3)
     jobMessages.foreach(unassignedWork.enqueue(_))
 
@@ -106,7 +107,6 @@ class WorkManager(val localWorkerCount: Int,
     while (unassignedWork.nonEmpty && workerIter.hasNext) {
       val message = unassignedWork.dequeue()
       val worker = workerIter.next()
-      log.info(s"handing out work $message to $worker")
       worker.tell(message, self)
       assignmentCount += 1
     }
@@ -114,7 +114,6 @@ class WorkManager(val localWorkerCount: Int,
   }
 
   private def handlePasswordCrackingResult(m: PasswordCrackingResult): Unit = {
-    log.info(s"got $m from $sender")
     workerPool.freeWorker(sender)
     if (passwordCrackingFinished) return
 
@@ -124,22 +123,12 @@ class WorkManager(val localWorkerCount: Int,
 
     if (!passwordCrackingFinished && !exerciseResult.exists { case (_, person) => person.password.equals(-1) }) {
       passwordCrackingFinished = true
-      log.info("Passwords cracked")
-      val resultList = exerciseResult
-        .toList
-        .sortBy { case (id, _) => id }
-
-      val passwordList = resultList.map(_._2.password).toArray
-      resultList.foreach { case (id, person) => log.info(s"$id: ${person.password}") }
-
-      // TODO maybe this will be started twice
       startLinearCombination()
     }
   }
 
 
   def handleLinearCombinationResult(m: LinearCombinationResult): Unit = {
-    println("got linear combo result")
     val idToPrefix = m.idToPrefix
     for ((key, value) <- idToPrefix) {
       exerciseResult(key).prefix = value
@@ -153,12 +142,10 @@ class WorkManager(val localWorkerCount: Int,
 
 
   def handleSubsequenceResult(m: SubSequenceResult): Unit = {
-    println(s"got subsequens res $m")
     exerciseResult(m.id).partner = m.partnerId
     workerPool.freeWorker(sender())
     assignAvailableWork()
     if (!exerciseResult.exists { case (_, person) => person.partner == -1 || person.prefix == 0 }) {
-      println(exerciseResult.mapValues(_.partner))
       startHashMining()
     }
   }
@@ -167,11 +154,15 @@ class WorkManager(val localWorkerCount: Int,
     if (m.success && !(got0Nonce && got1Nonce)) {
       if (m.prefix == -1 ) got0Nonce = true else got1Nonce = true
       exerciseResult.foreach { case (id, cracked) => if (m.prefix == cracked.prefix) cracked.hash = m.hash }
-      println("got hash result ", m.hash)
     } else if (!(got0Nonce && got1Nonce) && !m.success) {
       unassignedWork.enqueue(HashMiningJob.giveNextMessage(m.job))
     } else {
-      println("finished ", exerciseResult)
+      println("ID,Name,Password,Prefix,Partner,Hash")
+      for(key <- exerciseResult.keys.toList.sorted){
+        val person = exerciseResult(key)
+        printf("%d;%s;%d;%d;%d;%s\n",key,person.person.name,person.password,person.prefix,person.partner,person.hash)
+      }
+      printf("Time required: %d ms", System.currentTimeMillis() - startTime)
       workerPool.workerPool.foreach(worker => worker ! PoisonPill)
     }
     workerPool.freeWorker(sender())
@@ -181,14 +172,12 @@ class WorkManager(val localWorkerCount: Int,
   private def startLinearCombination(): Unit = {
     val idToPassword = exerciseResult.mapValues(w => w.password)
     unassignedWork ++= LinearCombinationJob.splitIntoNMessages(workerPool.numberOfIdleWorkers * 3, idToPassword)
-    print(unassignedWork)
     assignAvailableWork()
     startSubSequenceMatching()
   }
 
   private def startSubSequenceMatching(): Unit = {
     unassignedWork ++= SubSequenceJob.splitIntoNMessages(workerPool.numberOfIdleWorkers, exerciseResult.keys.size)
-    print(unassignedWork)
     assignAvailableWork()
   }
 
@@ -203,14 +192,14 @@ class WorkManager(val localWorkerCount: Int,
 
   private def handleTermination(message: Terminated): Unit = {
     context.unwatch(message.getActor)
-    /*
-    if (!idleWorkers.contains(message.getActor)) {
-      val work = busyWorkers.remove(message.getActor)
-      if (work != null) assignWork(work)
+    if(workerPool.workerPool.size > 1){
+      workerPool.removeWorker(message.getActor)
+      log.info("Unregistered {}", message.getActor)
     } else {
-      idleWorkers -= message.getActor
-    }*/
-    log.info("Unregistered {}", message.getActor)
+      workerPool.removeWorker(message.getActor)
+      context.stop(self)
+    }
+
   }
 }
 

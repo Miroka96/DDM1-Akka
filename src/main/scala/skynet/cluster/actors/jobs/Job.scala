@@ -31,7 +31,6 @@ object LinearCombinationJob {
 object SubSequenceJob {
   def splitIntoNMessages(_nrOfWorkers: Int, numberOfPersons: Int): Seq[SubSequenceMessage] = {
     // TODO might be further splitted up into single pars for working packages
-    println(s"number of persons $numberOfPersons")
     (1 to numberOfPersons).map(SubSequenceMessage)
   }
 }

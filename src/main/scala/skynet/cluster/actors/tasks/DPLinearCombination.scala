@@ -6,15 +6,16 @@ import scala.collection.mutable.ArrayBuffer
 
 trait DPLinearCombination {
 
+  @tailrec
   private def reconstructSubset(dp: Array[Array[Boolean]], passwords: Array[Int], i: Int, sum: Int, subset: ArrayBuffer[Int]): ArrayBuffer[Int] = {
     //last element does the job
     if (i == 0 && sum != 0 && dp(0)(sum)) {
       subset.append(passwords(i))
-      subset.foreach(println(_))
+      subset
     }
     // done
     else if (i == 0 && sum == 0) {
-      subset.foreach(println(_))
+      subset
     }
 
     //element not needed for sum
@@ -27,7 +28,6 @@ trait DPLinearCombination {
       reconstructSubset(dp, passwords, i - 1, sum - passwords(i), subset)
 
     }
-    subset
   }
 
   def getSubset(passwords: Array[Int]): ArrayBuffer[Int] = {
@@ -47,7 +47,6 @@ trait DPLinearCombination {
       }
     }
     if (!dp(passwords.length - 1)(sum)) {
-      println("no solution")
       return null
     }
     var subset = new ArrayBuffer[Int]()
@@ -55,7 +54,6 @@ trait DPLinearCombination {
   }
 
   def solveLinearCombination(idToPwd: Map[Int, Int]): Map[Int, Int] = {
-    println("Solving linear combination")
     val passwords = Array.ofDim[Int](idToPwd.keys.size)
     for (id <- idToPwd.keys) {
       passwords(id - 1) = idToPwd(id)
@@ -66,8 +64,6 @@ trait DPLinearCombination {
       var id = idToPwd.find(_._2==password).get._1
       idToIndex(id) = -1
     }
-    println(idToPwd)
-    println(idToIndex)
     idToIndex.toMap
   }
 

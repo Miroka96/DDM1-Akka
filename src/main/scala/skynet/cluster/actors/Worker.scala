@@ -78,7 +78,6 @@ class Worker extends AbstractWorker with RegistrationHandling with PasswordCrack
   }
 
   def handleHashMining(m: HashMiningMessage): Unit = {
-    println("got hashmining job ", m)
     Future({
       val result = this.mine(m.maxPartnerNr, m.from, m.to)
       if (result.isEmpty) {
@@ -96,7 +95,6 @@ class Worker extends AbstractWorker with RegistrationHandling with PasswordCrack
 
 
   def handleSubSequence(m: SubSequenceMessage): Unit = {
-    println("got subsequence job")
     Future({
       val gene = dataSet.find(_.id == m.id).get.gene
       val longest: Int = findPartner(dataSet, m.id, gene)
@@ -118,19 +116,10 @@ class Worker extends AbstractWorker with RegistrationHandling with PasswordCrack
   }
 
   def handleLinearCombination(m: LinearCombinationMessage): Unit = {
-    println("got linear job")
     Future({
       val result = this.solveLinearCombination(m.idToPassword)
       LinearCombinationResult(m, result)
     }).pipeTo(sender)
   }
 
-  /*private def handleWork(message: WorkMessage): Unit = {
-    val result = message.runOn(this)
-    sender.tell(result, self)
-  }*/
-
-  override protected def masterFound(): Unit = {
-    workManager.tell("lolololol", self)
-  }
 }

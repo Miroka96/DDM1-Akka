@@ -11,7 +11,6 @@ trait GeneMatching {
       if (datum.id != id) {
         val length = this.longestOverlapOriginal(gene, datum.gene).length
         val did = datum.id
-        //println(s"lenght was $length with my $id $did")
         if (length > longestLength) {
           longestLength = length
           longest = datum.id

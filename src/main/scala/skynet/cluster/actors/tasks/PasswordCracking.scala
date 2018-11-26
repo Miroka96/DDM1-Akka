@@ -7,7 +7,6 @@ import skynet.cluster.actors.Logging
 
 trait PasswordCracking extends Logging {
   def crack(hashesAndIds: Map[String, Int], start: Int, end: Int): Map[Int, Int] = {
-    log.info("start cracking")
 
     (start to end)
       .flatMap(password => {
@@ -15,7 +14,6 @@ trait PasswordCracking extends Logging {
         hashesAndIds
           .get(hash)
           .map(userId => {
-            log.info(s"found $hash for $password for $userId")
             (userId, password)
           })
       }).toMap
